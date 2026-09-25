@@ -1,0 +1,36 @@
+{
+  "_about": "Hand labels for resume.jordan-rivera.md vs jobs.json. Kept apart from the inputs so the pipeline can never read the answers. `traps` are phrasings a keyword-rule pipeline is likely to get wrong; they're what Jev has to beat.",
+  "resume": "resume.jordan-rivera.md",
+  "labels": {
+    "lakeshore-logistics:fixture:1001": {
+      "tier": "apply",
+      "blockers": [],
+      "why": "Meets every required item (CS degree, Java and Python, SQL, Git, new grads welcome). Only misses AWS, which is nice-to-have.",
+      "traps": ["'Java or Python' is one requirement satisfied by either, not two", "'0-2 years' includes zero"]
+    },
+    "prairie-health-tech:fixture:2002": {
+      "tier": "maybe",
+      "blockers": [],
+      "why": "React and REST are met. TypeScript is only partially met (has JavaScript). 1+ years professional is borderline: 3-month internship plus TA work.",
+      "traps": ["'Bachelor's degree or equivalent practical experience' is met by the degree", "JavaScript is partial evidence for TypeScript, not zero"]
+    },
+    "northbrook-robotics:fixture:3003": {
+      "tier": "stretch",
+      "blockers": [],
+      "why": "Degree met, but misses Go/Rust, Kubernetes and 2+ years backend. Has adjacent evidence (Java backend, Docker, PostgreSQL).",
+      "traps": ["Docker is adjacent to Kubernetes but does not satisfy it", "PostgreSQL is a bonus item, so it shouldn't raise the tier much"]
+    },
+    "riverline-capital:fixture:4004": {
+      "tier": "big_stretch",
+      "blockers": [],
+      "why": "Misses the graduate-degree requirement, 3+ years of production ML, PyTorch and Spark. Has Python and a small scikit-learn project.",
+      "traps": ["A scikit-learn class project is not 'deploying models to production'", "'MS or PhD' is not met by a B.S."]
+    },
+    "loop-defense-systems:fixture:5005": {
+      "tier": "no",
+      "blockers": ["security_clearance", "experience_years"],
+      "why": "Requires an active TS/SCI clearance at start and 7+ years; the candidate has neither. Citizenship isn't stated on the resume, so it's unclear rather than unmet.",
+      "traps": ["Having C++ must not outweigh a hard blocker", "Resume silence on citizenship means unclear, not does_not_meet"]
+    }
+  }
+}

@@ -1,0 +1,13 @@
+node_modules/
+dist/
+.next/
+coverage/
+*.tsbuildinfo
+
+# secrets: only .env.example is committed
+.env
+.env.*
+!.env.example
+
+# local run output (ranked sessions, eval runs you haven't chosen to publish)
+.jevjob/

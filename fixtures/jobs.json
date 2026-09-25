@@ -1,0 +1,47 @@
+[
+  {
+    "id": "lakeshore-logistics:fixture:1001",
+    "company": "Lakeshore Logistics",
+    "title": "Software Engineer I (New Grad)",
+    "location": "Chicago, IL (Hybrid)",
+    "applyUrl": "https://careers.lakeshore-logistics.example/jobs/1001",
+    "postedAt": "2026-09-18",
+    "description": "About the role\nJoin our routing platform team building the services that schedule 40,000 deliveries a day.\n\nWhat you'll do\n- Build and maintain backend services and internal tools\n- Write tests and participate in code review\n- Work with product and operations to ship features\n\nRequirements\n- Bachelor's degree in Computer Science or a related field\n- Proficiency in Java or Python\n- Working knowledge of SQL\n- Experience with Git\n- 0-2 years of experience; new graduates welcome\n\nNice to have\n- Spring Boot\n- AWS\n- Docker"
+  },
+  {
+    "id": "prairie-health-tech:fixture:2002",
+    "company": "Prairie Health Tech",
+    "title": "Associate Full-Stack Engineer",
+    "location": "Remote (US)",
+    "applyUrl": "https://prairiehealth.example/careers/2002",
+    "postedAt": "2026-09-20",
+    "description": "Prairie Health Tech builds scheduling software for community clinics.\n\nResponsibilities\n- Build patient-facing features across our React frontend and Node.js API\n- Design and consume REST APIs\n- Collaborate with designers on accessible UI\n\nQualifications\n- 1+ years of professional software development experience\n- Strong TypeScript and React skills\n- Experience building REST APIs\n- Bachelor's degree or equivalent practical experience\n\nPreferred\n- Next.js\n- GraphQL\n- Familiarity with healthcare data and HIPAA"
+  },
+  {
+    "id": "northbrook-robotics:fixture:3003",
+    "company": "Northbrook Robotics",
+    "title": "Backend Engineer",
+    "location": "Northbrook, IL (Onsite)",
+    "applyUrl": "https://jobs.northbrook-robotics.example/3003",
+    "postedAt": "2026-09-12",
+    "description": "We build fleet software for warehouse robots.\n\nYou will\n- Design services that coordinate hundreds of robots in real time\n- Own reliability of our message pipeline\n\nMinimum qualifications\n- 2+ years of backend development in Go or Rust\n- Hands-on experience with Kubernetes\n- Experience designing distributed systems\n- BS in Computer Science or equivalent\n\nBonus points\n- gRPC\n- Kafka\n- PostgreSQL"
+  },
+  {
+    "id": "riverline-capital:fixture:4004",
+    "company": "Riverline Capital",
+    "title": "Machine Learning Engineer",
+    "location": "Chicago, IL",
+    "applyUrl": "https://riverline-capital.example/careers/ml-engineer-4004",
+    "postedAt": "2026-09-22",
+    "description": "Riverline's research platform team puts models into production for our trading desks.\n\nRequirements\n- MS or PhD in Computer Science, Statistics, or a related quantitative field\n- 3+ years deploying machine learning models to production\n- Deep experience with PyTorch\n- Strong Python\n- Experience with large-scale data processing (Spark or similar)\n\nNice to have\n- LLM fine-tuning\n- MLOps tooling such as MLflow"
+  },
+  {
+    "id": "loop-defense-systems:fixture:5005",
+    "company": "Loop Defense Systems",
+    "title": "Senior Software Engineer, Embedded C++",
+    "location": "Rolling Meadows, IL (Onsite)",
+    "applyUrl": "https://careers.loopdefense.example/req/5005",
+    "postedAt": "2026-09-10",
+    "description": "Develop flight software for airborne sensor systems.\n\nRequired\n- 7+ years of C++ development on embedded systems\n- Active TS/SCI security clearance required at start date\n- U.S. citizenship\n- Bachelor's degree in Computer Engineering, Computer Science, or Electrical Engineering\n\nDesired\n- Real-time operating systems (VxWorks or similar)\n- DO-178C experience"
+  }
+]
