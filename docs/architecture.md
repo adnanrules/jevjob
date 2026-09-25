@@ -64,4 +64,5 @@ jevjob/
 - [x] M1 · Domain types (`packages/core/src/domain.ts`)
 - [x] M1 · Rule-based extraction: posting text → `Requirement[]`, resume text → `Resume`
 - [x] M1 · Rule-based assessor: `Resume` + `Requirement` → `Assessment` (`npm run demo` prints it)
-- [ ] M1 · Policy: `AssessedJob` + aggressiveness → `RankedJob`, checked against `fixtures/expected.json`
+- [x] M1 · Policy: `AssessedJob` + aggressiveness → `RankedJob`, checked against `fixtures/expected.json`
+- [ ] M2 · Eval: 30–50 labeled resume/job pairs, a metrics runner, real baseline numbers for the rules
