@@ -61,4 +61,7 @@ jevjob/
 
 ## Current task
 
-**M1 · Task 1: domain types** in `packages/core/src/domain.ts`. See the task list in the chat or the README.
+- [x] M1 · Domain types (`packages/core/src/domain.ts`)
+- [ ] M1 · Rule-based extraction: posting text → `Requirement[]`, resume text → `Resume`
+- [ ] M1 · Rule-based assessor: `Resume` + `Requirement` → `Assessment`
+- [ ] M1 · Policy: `AssessedJob` + aggressiveness → `RankedJob`, checked against `fixtures/expected.json`
