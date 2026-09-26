@@ -1,0 +1,56 @@
+[
+  {
+    "id": "lakeview-schools:heldout:1101",
+    "company": "Lakeview Unified School District",
+    "title": "IT Support Technician",
+    "location": "Evanston, IL (Onsite)",
+    "applyUrl": "https://jobs.lakeviewschools.example/1101",
+    "postedAt": "2026-09-20",
+    "description": "Keep 9 school campuses running.\n\nWhat you'll do\n- Fix laptops, printers and classroom displays\n- Set up accounts for new staff\n\nRequirements\n- Associate's degree in IT or equivalent experience\n- 2+ years of help desk or desktop support experience\n- Experience with Windows, Active Directory and Microsoft 365\n- Valid driver's license and ability to travel between campuses\n\nPreferred\n- CompTIA A+\n- PowerShell scripting"
+  },
+  {
+    "id": "tollway-labs:heldout:1202",
+    "company": "Tollway Labs",
+    "title": "Junior Data Engineer",
+    "location": "Chicago, IL (Hybrid)",
+    "applyUrl": "https://tollwaylabs.example/careers/1202",
+    "postedAt": "2026-09-22",
+    "description": "We turn traffic sensor data into travel-time predictions.\n\nYou will\n- Build batch pipelines from raw sensor feeds\n- Keep data quality checks green\n\nRequirements\n- Bachelor's degree in a technical field\n- Python and SQL\n- Experience with Airflow or a similar orchestrator\n- Exposure to cloud data warehouses (Snowflake, BigQuery, or Redshift)\n- 0-2 years of experience\n\nNice to have\n- dbt\n- AWS"
+  },
+  {
+    "id": "orbit-health:heldout:1303",
+    "company": "Orbit Health",
+    "title": "Machine Learning Engineer, NLP",
+    "location": "Remote (US)",
+    "applyUrl": "https://orbithealth.example/jobs/1303",
+    "postedAt": "2026-09-18",
+    "description": "Build models that read clinical notes so nurses don't have to.\n\nResponsibilities\n- Train and ship NLP models for triage\n- Monitor model quality in production\n\nRequirements\n- Bachelor's or Master's in Computer Science or a related field\n- 2+ years of industry experience training and deploying NLP models\n- PyTorch and Hugging Face Transformers\n- Must be authorized to work in the U.S.; we are unable to sponsor visas\n\nPreferred\n- Retrieval systems (RAG)\n- HIPAA"
+  },
+  {
+    "id": "prairie-state-energy:heldout:1404",
+    "company": "Prairie State Energy",
+    "title": "Staff Data Engineer",
+    "location": "Chicago, IL",
+    "applyUrl": "https://careers.prairiestate-energy.example/1404",
+    "postedAt": "2026-09-16",
+    "description": "Own the data platform behind grid forecasting.\n\nRequirements\n- 8+ years of data engineering experience\n- Expert SQL and Python\n- Spark and Kafka at scale\n- Experience leading a team of engineers\n\nPreferred\n- Terraform\n- Snowflake"
+  },
+  {
+    "id": "northshore-credit:heldout:1505",
+    "company": "Northshore Credit Union",
+    "title": "Help Desk Analyst",
+    "location": "Skokie, IL",
+    "applyUrl": "https://northshorecu.example/careers/1505",
+    "postedAt": "2026-09-23",
+    "description": "Be the first call when a branch's tech breaks.\n\nRequirements\n- High school diploma required; college coursework a plus\n- 1+ years of customer-facing technical support\n- Familiarity with Windows 11 and Microsoft 365\n- Excellent written communication\n\nNice to have\n- ServiceNow or a similar ticketing system"
+  },
+  {
+    "id": "gridline-ai:heldout:1606",
+    "company": "Gridline AI",
+    "title": "AI Engineer (New Grad)",
+    "location": "Chicago, IL",
+    "applyUrl": "https://gridline-ai.example/jobs/1606",
+    "postedAt": "2026-09-24",
+    "description": "Join a 12-person team shipping LLM features for utilities.\n\nWhat you'll do\n- Build retrieval and evaluation pipelines\n- Ship features end to end with a mentor\n\nRequirements\n- BS in Computer Science or a related field (graduating by June 2026)\n- Strong Python\n- Built at least one project using LLM APIs or retrieval-augmented generation\n- No prior full-time experience required\n\nNice to have\n- PyTorch\n- Docker\n- AWS"
+  }
+]

@@ -1,0 +1,63 @@
+{
+  "_about": "TEST set: 3 new fictional candidates x 6 new postings, labeled on 2026-09-25 BEFORE any system was run on them, using the same tier guide as cases.json. Never tune on these. If a label turns out to be wrong, fix it in a separate commit that says so, and report numbers from before and after.",
+  "asOf": "2026-09-25",
+  "resumes": {
+    "sam": "packages/eval/dataset/heldout/resumes/sam-okafor.md",
+    "grace": "packages/eval/dataset/heldout/resumes/grace-liu.md",
+    "devon": "packages/eval/dataset/heldout/resumes/devon-park.md"
+  },
+  "jobFiles": ["packages/eval/dataset/heldout/jobs.json"],
+  "cases": [
+    { "resume": "sam", "job": "lakeview-schools:heldout:1101", "tier": "apply", "blockers": [],
+      "checks": [
+        { "requirement": "driver's license", "verdict": "unclear" },
+        { "requirement": "2+ years of help desk", "verdict": "meets" },
+        { "requirement": "Associate's degree", "verdict": "meets" }
+      ],
+      "note": "4+ years of support work. Resumes rarely mention a driver's license, so it's unknown, not missing." },
+    { "resume": "sam", "job": "tollway-labs:heldout:1202", "tier": "big_stretch", "blockers": [], "checks": [] },
+    { "resume": "sam", "job": "orbit-health:heldout:1303", "tier": "big_stretch", "blockers": [], "checks": [] },
+    { "resume": "sam", "job": "prairie-state-energy:heldout:1404", "tier": "no", "blockers": ["experience_years"], "checks": [] },
+    { "resume": "sam", "job": "northshore-credit:heldout:1505", "tier": "apply", "blockers": [],
+      "checks": [
+        { "requirement": "High school diploma", "verdict": "meets" },
+        { "requirement": "customer-facing technical support", "verdict": "meets" }
+      ] },
+    { "resume": "sam", "job": "gridline-ai:heldout:1606", "tier": "big_stretch", "blockers": [],
+      "checks": [{ "requirement": "Strong Python", "verdict": "does_not_meet" }],
+      "note": "'Python (learning)' is not strong Python." },
+
+    { "resume": "grace", "job": "lakeview-schools:heldout:1101", "tier": "big_stretch", "blockers": [], "checks": [] },
+    { "resume": "grace", "job": "tollway-labs:heldout:1202", "tier": "maybe", "blockers": [],
+      "checks": [{ "requirement": "Airflow", "verdict": "does_not_meet" }] },
+    { "resume": "grace", "job": "orbit-health:heldout:1303", "tier": "no", "blockers": ["work_authorization"],
+      "checks": [
+        { "requirement": "unable to sponsor", "verdict": "does_not_meet" },
+        { "requirement": "2+ years of industry experience", "verdict": "does_not_meet" }
+      ],
+      "note": "She states she will require sponsorship; the posting can't sponsor. Research isn't industry experience." },
+    { "resume": "grace", "job": "prairie-state-energy:heldout:1404", "tier": "no", "blockers": ["experience_years"], "checks": [] },
+    { "resume": "grace", "job": "northshore-credit:heldout:1505", "tier": "big_stretch", "blockers": [], "checks": [] },
+    { "resume": "grace", "job": "gridline-ai:heldout:1606", "tier": "apply", "blockers": [],
+      "checks": [
+        { "requirement": "No prior full-time experience required", "verdict": "meets" },
+        { "requirement": "retrieval-augmented generation", "verdict": "meets" },
+        { "requirement": "graduating by June 2026", "verdict": "meets" }
+      ] },
+
+    { "resume": "devon", "job": "lakeview-schools:heldout:1101", "tier": "big_stretch", "blockers": [], "checks": [] },
+    { "resume": "devon", "job": "tollway-labs:heldout:1202", "tier": "maybe", "blockers": [],
+      "checks": [{ "requirement": "cloud data warehouses", "verdict": "meets" }],
+      "note": "Meets every skill but is far past '0-2 years' for a junior role." },
+    { "resume": "devon", "job": "orbit-health:heldout:1303", "tier": "big_stretch", "blockers": [],
+      "checks": [{ "requirement": "unable to sponsor", "verdict": "meets" }] },
+    { "resume": "devon", "job": "prairie-state-energy:heldout:1404", "tier": "apply", "blockers": [],
+      "checks": [
+        { "requirement": "leading a team", "verdict": "meets" },
+        { "requirement": "8+ years", "verdict": "meets" }
+      ] },
+    { "resume": "devon", "job": "northshore-credit:heldout:1505", "tier": "big_stretch", "blockers": [], "checks": [] },
+    { "resume": "devon", "job": "gridline-ai:heldout:1606", "tier": "big_stretch", "blockers": [], "checks": [],
+      "note": "A new-grad program is the wrong level for 9 years of experience, and there's no LLM project." }
+  ]
+}
