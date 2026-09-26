@@ -78,6 +78,58 @@ describe("parseResume", () => {
   });
 });
 
+describe("parseResume on text extracted from a PDF or Word file", () => {
+  // No markdown: plain-text headers, other bullet characters, numeric dates, titles above their dates.
+  const pdfText = [
+    "ALEX KIM",
+    "alex@example.com | Chicago, IL",
+    "EDUCATION",
+    "Bachelor of Science in Computer Science, Lakeview State University",
+    "PROFESSIONAL EXPERIENCE",
+    "Software Engineer Intern",
+    "Acme Corp | 06/2024 – 08/2024",
+    "● Built data pipelines in Python and SQL",
+    "Barista, Bean There Cafe   Sep 2021 – May 2024",
+    "▪ Trained new hires",
+    "TECHNICAL SKILLS:",
+    "Python, SQL, Docker",
+  ].join("\n");
+  const resume = parseResume(pdfText, { asOf: new Date("2026-09-25") });
+
+  it("finds plain-text section headers and the degree", () => {
+    expect(resume.degree).toBe("bachelor");
+    expect(resume.roles).toHaveLength(2);
+  });
+
+  it("takes the title from the line above when the date line has none of its own", () => {
+    expect(resume.roles[0]!.title).toBe("Software Engineer Intern");
+    expect(resume.roles[0]!.text).toContain("Built data pipelines");
+    expect(resume.roles[1]!.title).toBe("Barista");
+  });
+
+  it("pairs dates from a separate text box with the role headings that follow, in order", () => {
+    const wordTemplate = [
+      "Experience",
+      "Aug 2020-Feb 2025",
+      "Feb 2025 – June 2026",
+      "Freelance Developer, Remote",
+      "- Built client apps",
+      "IT Tech Support, East Gate Training",
+      "- Fixed network issues",
+      "Certifications",
+    ].join("\n");
+    const r = parseResume(wordTemplate, { asOf: new Date("2026-09-25") });
+    expect(r.roles.map((x) => x.title)).toEqual(["Freelance Developer", "IT Tech Support"]);
+    expect(r.roles[1]!.text).toContain("Fixed network issues");
+    expect(r.roles[0]!.endMonth - r.roles[0]!.startMonth + 1).toBe(55);
+  });
+
+  it("reads numeric dates and still counts only technical titles for the rules", () => {
+    expect(resume.yearsExperience).toBe(0.25);
+    expect(resume.skills).toEqual(expect.arrayContaining(["python", "sql", "docker"]));
+  });
+});
+
 describe("findEligibility", () => {
   it("doesn't mistake a driver's license for a professional license", () => {
     expect(findEligibility("Valid driver's license and ability to travel")).toBeNull();

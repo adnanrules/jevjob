@@ -12,10 +12,12 @@
     "@jevjob/core": "*",
     "@jevjob/harness": "*",
     "@jevjob/jev": "*",
+    "mammoth": "^1.12.3",
     "motion": "^13.4.4",
     "next": "^16.3.6",
     "react": "^19.3.0",
-    "react-dom": "^19.3.0"
+    "react-dom": "^19.3.0",
+    "unpdf": "^1.8.1"
   },
   "devDependencies": {
     "@types/react": "^19.3.0",
