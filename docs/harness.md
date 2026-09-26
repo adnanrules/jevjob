@@ -12,6 +12,7 @@ you ─▶ /jevjob junior swe in Chicago this week
         │                                              and answers "fetch these ids"
         ├─ Indeed get_job_details ─▶ add_jobs          full postings: structure rebuilt, 3+ years (entry level),
         │                                              in-state first, loaded into the app
+        ├─ search_career_sites JevJob searches Joboid's employer career sites (direct apply links)
         └─ open_app            the app ranks them with Jev, 50 at a time
 ```
 
@@ -25,6 +26,23 @@ The requested city first, then nearby cities (for Chicago: Naperville, Schaumbur
 Joliet), then the rest of the state, then **remote only**. A posting in another state is accepted only when it's
 remote, and in-state postings always come first. Say "only in Chicago" (`strict_location`) to stop the widening.
 
+## When the search runs short
+
+The Indeed plugin draws from a small index: it returns 10 postings per search, and past a point every search in an
+area returns the same ones. So a short search degrades in a fixed order instead of stopping at 2 postings:
+
+1. **Saturation.** An Indeed search that adds fewer than 2 new postings is "dry". Two dry searches in a row skip
+   that area; four in a row skip every local area and go straight to remote (a different pool).
+2. **Career sites.** Once Indeed is used up, `search_career_sites` runs Joboid's title search over the employers it
+   tracks (Greenhouse, Workday, …) and puts each posting through the same checks. It reads Joboid's cache
+   (`start_search` refreshes it in the background) and fetches at most 80 postings per call, in-window first.
+3. **Widening.** Still short, and the user gave a "posted within" window? Postings that missed only on date were
+   held back all along. The window widens one step at a time (7 → 14 → 30 days; never past 4× the request, or 30
+   days for short windows) and releases them. Each carries `outsideWindowDays`, shows a dashed "12d · outside 7d"
+   tag in the app, and ranks below in-window jobs of the same tier. A step that would add nothing isn't taken.
+
+Every tool result reports `saturated` areas and `widenedTo`, so the assistant can say why a batch is short.
+
 ## Tools
 
 | MCP tool | What it does |
@@ -32,6 +50,7 @@ remote, and in-state postings always come first. Say "only in Chicago" (`strict_
 | `start_search` | Plans a new search from the user's words; returns the searches to run, in order, and `next` |
 | `add_search_results` | One raw Indeed `search_jobs` output; answers which job ids to fetch |
 | `add_jobs` | Raw Indeed `get_job_details` outputs (`indeed_details`), or web-search postings (`postings`) |
+| `search_career_sites` | Company career sites through Joboid, once `next` asks for it; no arguments |
 | `more_jobs` | Next 50 with the same search, never repeating a posting |
 | `open_app` | Starts the web app if needed; an open app notices new postings and offers to rank them |
 | `rank` | Compact results in chat, for when you don't want the app |
