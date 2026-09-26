@@ -118,3 +118,27 @@ Spot checks of the extracted lines looked right (C/C++, Linux internals, kernel 
 background in scalable systems" as preferred). The dev and held-out numbers are unchanged, because every labeled
 posting has at least 3 rule-extracted requirements and never takes the new path. This measures coverage, not
 accuracy. Accuracy on messy postings needs its own labeled set.
+
+## 7. Presenting resumes to Jev better (v2 questions), tuned on dev
+
+Dev-set errors showed Jev answering too harshly on close relatives (JavaScript for a TypeScript requirement came back
+does_not_meet) and missing alternatives a requirement allows (a math degree for "CS or a related field"). Two changes:
+
+- **Facts in the state.** Next to the resume text, Jev now gets what code already computed: highest degree, education
+  lines, each job with its length in months, years across all jobs, and the skills detected. Jev reads dates as
+  text, so it shouldn't be doing that arithmetic.
+- **Clearer answer definitions.** "meets" includes alternatives the requirement itself allows; "partial" names close
+  relatives and projects-instead-of-professional-use; "not_stated" lists what resumes usually omit.
+- **Confidence cutoff** swept on dev (0.2 to 0.6, cached answers, no new calls): 0.3 instead of 0.5.
+
+| | before (entry 5) | v2 |
+|---|---|---|
+| Dev tier exact | 30/40 | **32/40** |
+| Dev requirement checks | 26/30 | **29/30** |
+| Held-out tier exact (not clean, see entry 5) | 14/18 | 13/18 |
+| Held-out requirement checks | 15/16 | 15/16 |
+
+Per-requirement accuracy, the part Jev controls, went up on dev and held steady on held-out. The one held-out tier
+that got worse (a data engineer for an NLP role, now stretch instead of big_stretch) is the known "different
+specialty" weakness of the policy. It's a policy problem, not a Jev one. With 18 held-out cases, one case is within
+noise, and a fresh held-out set is still owed before calling any number clean.

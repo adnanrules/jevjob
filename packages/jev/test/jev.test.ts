@@ -39,7 +39,10 @@ describe("buildRequest", () => {
   const { state, questions, plan } = buildRequest(resume, job, base.requirements);
 
   it("sends the resume once as state and covers every requirement", () => {
-    expect(state).toEqual({ resume: resume.rawText });
+    expect(state.resume).toBe(resume.rawText);
+    // Code-computed facts ride along, so Jev never has to do date arithmetic.
+    expect(state.facts).toMatchObject({ highest_degree: "bachelor", years_across_all_jobs: 1.42 });
+    expect(state.facts.jobs[0]).toBe("Software Engineering Intern: 3 months");
     expect(plan.verdict.size + plan.experienceRoles.size).toBe(base.requirements.length);
   });
 
@@ -65,7 +68,7 @@ describe("interpret", () => {
   });
 
   it("turns low-confidence answers into unclear instead of trusting them", () => {
-    const v = verdictsWith("Lakeshore Logistics", (key) => (key.startsWith("req_") ? choice("does_not_meet", 0.3) : noul(0.95)));
+    const v = verdictsWith("Lakeshore Logistics", (key) => (key.startsWith("req_") ? choice("does_not_meet", 0.2) : noul(0.95)));
     expect(find(v, "AWS")).toEqual(["unclear"]);
   });
 

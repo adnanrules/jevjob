@@ -1,20 +1,44 @@
 // Builds ONE Jev request per job: state = the resume, one small typed question per requirement.
 // Pure (no network), so it's unit-tested directly.
 import { choice, noul, type Questions } from "@typesafe-ai/sdk";
-import type { RawJob, Requirement, Resume } from "@jevjob/core";
+import { yearsOf, type RawJob, type Requirement, type Resume } from "@jevjob/core";
 
 /**
  * Four labels, not three: "not_stated" separates "the resume doesn't say" (citizenship, usually)
  * from "the resume would say if it were true, and doesn't" (a Kubernetes skill).
+ * v2 wording (dev-set errors): v1 answered does_not_meet for JavaScript vs TypeScript, and unclear for a math degree vs
+ * "CS or a related field". Alternatives a requirement allows now count as met; close relatives count as partial.
  */
 export const VERDICT_CRITERIA = {
-  meets: "The resume clearly shows the candidate satisfies this requirement.",
+  meets:
+    "The resume shows the candidate satisfies this requirement, including through an alternative the requirement itself allows ('or a related field', 'or equivalent experience'). Use `facts` for degrees and years.",
   partial:
-    "The resume shows related or partial evidence but not a clear match: a similar skill, less depth, or an adjacent field.",
-  not_stated: "The resume doesn't say either way, and this is something resumes commonly leave out.",
-  does_not_meet: "The resume shows the candidate lacks this, or it's something a resume would list and this one doesn't.",
+    "Related evidence but not a full match: a closely related skill (JavaScript for a TypeScript requirement), coursework or personal projects where professional use is asked for, or less depth than asked.",
+  not_stated:
+    "The resume doesn't say either way, and it's something resumes usually leave out: citizenship, a driver's license, willingness to travel, soft skills.",
+  does_not_meet:
+    "The resume shows the candidate lacks this, or the requirement names a specific skill, tool or credential that a resume would list, and nothing related appears.",
 } as const;
 export type JevVerdict = keyof typeof VERDICT_CRITERIA;
+
+/**
+ * What code already knows about the resume, stated plainly so Jev doesn't have to compute it
+ * (the docs: "Jev is not a calculator"; it reads dates as text, not quantities).
+ */
+export function resumeFacts(resume: Resume) {
+  const education = resume.rawText
+    .split("\n")
+    .map((l) => l.replace(/\*\*/g, "").replace(/^[-*•]\s*/, "").trim())
+    .filter((l) => l.length < 160 && /\b(B\.?S\.?|B\.?A\.?|M\.?S\.?|Ph\.?\s?D|bachelor|master|associate of|doctorate|degree|diploma|certificate|bootcamp)\b/i.test(l))
+    .slice(0, 4);
+  return {
+    highest_degree: resume.degree,
+    education,
+    jobs: resume.roles.map((r) => `${r.title}: ${r.endMonth - r.startMonth + 1} months`),
+    years_across_all_jobs: yearsOf(resume.roles),
+    skills_named: resume.skills,
+  };
+}
 
 /** Which question answers what. The interpreter needs this to map answers back to requirements. */
 export interface Plan {
@@ -27,7 +51,7 @@ export interface Plan {
 }
 
 export interface JevRequest {
-  state: { resume: string };
+  state: { resume: string; facts: ReturnType<typeof resumeFacts> };
   questions: Questions;
   plan: Plan;
 }
@@ -85,5 +109,5 @@ export function buildRequest(resume: Resume, job: RawJob, requirements: Requirem
     }
   });
 
-  return { state: { resume: resume.rawText }, questions, plan };
+  return { state: { resume: resume.rawText, facts: resumeFacts(resume) }, questions, plan };
 }

@@ -9,7 +9,7 @@ import type { JevVerdict, Plan } from "./questions";
 /** Tunable on the eval's dev split. Starting values follow the docs' advice: conservative first. */
 export const JEV_POLICY = {
   /** Choice answers less confident than this become "unclear" (the docs' confidence-routing pattern). */
-  minConfidence: 0.5,
+  minConfidence: 0.3, // v2: swept on dev (0.2-0.6); clearer questions made 0.5 too cautious
   /** Noul above this counts as yes, below `noulNo` as no, in between as unclear. */
   noulYes: 0.7,
   noulNo: 0.3,
