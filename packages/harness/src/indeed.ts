@@ -420,7 +420,7 @@ export interface JobsSummary {
  * Final checks on one full posting: place, level, experience, date. Returns it ready to load (tagged when it's
  * only here because the window widened), or null when it was skipped or held back as a near miss.
  */
-export function admit(s: Search, job: RawJob, { requirePlace = false } = {}): Candidate | null {
+export function admit(s: Search, job: RawJob, { requirePlace = false, roleChecked = false } = {}): Candidate | null {
   const reject = (reason: string) => {
     skip(s, reason);
     return null;
@@ -428,7 +428,7 @@ export function admit(s: Search, job: RawJob, { requirePlace = false } = {}): Ca
   const where = placement(job.location, s.plan);
   if (where === "no") return reject("outside the area (and not remote)");
   if (where === "unknown" && requirePlace) return reject("location not stated");
-  const issue = jobFitIssue(job, s.plan);
+  const issue = jobFitIssue(job, s.plan, { roleChecked });
   if (issue) return reject(issue);
   const home = where !== "remote";
   const requested = searchDays(s.plan);

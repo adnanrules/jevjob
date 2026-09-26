@@ -167,7 +167,8 @@ export async function addFromFeed(s: Search, dir: string): Promise<FeedStep> {
       return [{ ...job, location, posted }];
     });
     const { jobs } = normalizeJobs(raw);
-    const admitted = jobs.flatMap((job: RawJob) => admit(s, job, { requirePlace: true }) ?? []);
+    // The row already passed the role check on title or the feed's own category (feedCandidates).
+    const admitted = jobs.flatMap((job: RawJob) => admit(s, job, { requirePlace: true, roleChecked: true }) ?? []);
     added += load(s, admitted.slice(0, Math.max(0, s.target - s.loaded)));
   }
   return { matched: rows.length, read, added };

@@ -46,10 +46,11 @@ export function entryExperienceIssue(description: string): boolean {
   return false;
 }
 
-export function jobFitIssue(job: RawJob, plan: SearchPlan): string | null {
+/** `roleChecked`: the source already vouched for the role (the new-grad feed's category), so only level is checked. */
+export function jobFitIssue(job: RawJob, plan: SearchPlan, { roleChecked = false } = {}): string | null {
   const source = sourceIssue(job);
   if (source) return source;
-  if (!titleFit(job.title, plan) || levelFit(job.title, plan) === null) return "title or level mismatch";
+  if ((!roleChecked && !titleFit(job.title, plan)) || levelFit(job.title, plan) === null) return "title or level mismatch";
   if (plan.level === "entry") {
     if (/\bseniority level\s*[:\n]?\s*(?:mid[-\s]*senior|senior|director)/i.test(job.description.replace(/[\u2010-\u2015]/g, "-"))) return "posting explicitly describes a senior role";
     if (entryExperienceIssue(job.description)) return "requires 3+ years of experience";
