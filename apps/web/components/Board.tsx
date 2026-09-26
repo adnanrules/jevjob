@@ -5,7 +5,9 @@ import { TIERS } from "@/lib/tiers";
 import { Barcode } from "./Barcode";
 import { Chip } from "./Chip";
 
-export function Board({ ranked, onOpen }: { ranked: RankedJob[]; onOpen: (id: string) => void }) {
+export type DetailTab = "match" | "posting";
+
+export function Board({ ranked, onOpen }: { ranked: RankedJob[]; onOpen: (id: string, tab: DetailTab) => void }) {
   return (
     <div className="board">
       <AnimatePresence initial={false}>
@@ -16,7 +18,8 @@ export function Board({ ranked, onOpen }: { ranked: RankedJob[]; onOpen: (id: st
   );
 }
 
-function Row({ r, onOpen }: { r: RankedJob; onOpen: (id: string) => void }) {
+function Row({ r, onOpen: open }: { r: RankedJob; onOpen: (id: string, tab: DetailTab) => void }) {
+  const onOpen = (id: string) => open(id, "match");
   const tier = TIERS[r.tier];
   const req = r.coverage.required;
   return (
@@ -44,9 +47,12 @@ function Row({ r, onOpen }: { r: RankedJob; onOpen: (id: string) => void }) {
       </div>
       {r.requirements.length ? <Barcode assessed={r} revealed /> : <span className="unread">no requirements listed</span>}
       <div className="cov" title="Required qualifications you meet">{req.total ? `${req.met}/${req.total}` : "–"}</div>
-      <a className="apply" href={r.job.applyUrl} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()}>
-        Apply ↗
-      </a>
+      <div className="row-actions">
+        <button className="view" onClick={(e) => { e.stopPropagation(); open(r.job.id, "posting"); }}>View</button>
+        <a className="apply" href={r.job.applyUrl} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()}>
+          Apply ↗
+        </a>
+      </div>
     </motion.div>
   );
 }

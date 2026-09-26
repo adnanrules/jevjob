@@ -12,6 +12,7 @@ const JevJobShape = z.object({
   title: z.string().min(1),
   location: z.string().default(""),
   applyUrl: httpUrl,
+  postingUrl: httpUrl.optional(),
   postedAt: z.string().optional(),
   description: z.string(),
 });
@@ -56,8 +57,8 @@ export function normalizeJobs(input: unknown): IngestResult {
 function toRawJob(item: unknown): RawJob | string {
   const ours = JevJobShape.safeParse(item);
   if (ours.success) {
-    const { postedAt, ...rest } = ours.data;
-    return postedAt ? { ...rest, postedAt } : rest;
+    const { postedAt, postingUrl, ...rest } = ours.data;
+    return { ...rest, ...(postingUrl && { postingUrl }), ...(postedAt && { postedAt }) };
   }
   const joboid = JoboidShape.safeParse(item);
   if (joboid.success) {
@@ -68,7 +69,8 @@ function toRawJob(item: unknown): RawJob | string {
     if (!applyUrl) return "no http(s) apply link";
     const postedAt = /^\d{4}-\d{2}-\d{2}$/.test(j.posted ?? "") ? j.posted! : undefined;
     const job: RawJob = { id: j.id, company: j.company, title: j.title, location: j.location ?? "", applyUrl, description: j.description ?? "" };
-    return postedAt ? { ...job, postedAt } : job;
+    const postingUrl = j.posting_url && j.posting_url !== applyUrl ? j.posting_url : undefined;
+    return { ...job, ...(postingUrl && { postingUrl }), ...(postedAt && { postedAt }) };
   }
   return ours.error.issues.map((i) => `${i.path.join(".") || "item"}: ${i.message}`).slice(0, 3).join("; ");
 }

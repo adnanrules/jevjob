@@ -23,7 +23,7 @@ afterAll(() => client.close());
 describe("jevjob MCP server", () => {
   it("exposes the harness tools", async () => {
     const { tools } = await client.listTools();
-    expect(tools.map((t) => t.name).sort()).toEqual(["clear_jobs", "import_from_joboid", "load_jobs", "more_jobs", "open_app", "rank", "status"]);
+    expect(tools.map((t) => t.name).sort()).toEqual(["clear_jobs", "find_jobs", "load_jobs", "more_jobs", "open_app", "rank", "status"]);
   });
 
   it("answers status as JSON", async () => {

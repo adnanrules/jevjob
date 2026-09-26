@@ -12,11 +12,13 @@ describe("normalizeJobs", () => {
   it("maps Joboid's shape (apply_url, posted) onto RawJob", () => {
     const { jobs: out } = normalizeJobs([{
       id: "acme:greenhouse:1", company: "Acme", title: "SWE", location: "Chicago, IL",
-      apply_url: "https://boards.greenhouse.io/acme/jobs/1", posted: "2026-09-20", description: longText, fit: { score: 1 },
+      apply_url: "https://boards.greenhouse.io/acme/jobs/1/apply", posting_url: "https://boards.greenhouse.io/acme/jobs/1",
+      posted: "2026-09-20", description: longText, fit: { score: 1 },
     }]);
     expect(out[0]).toEqual({
       id: "acme:greenhouse:1", company: "Acme", title: "SWE", location: "Chicago, IL",
-      applyUrl: "https://boards.greenhouse.io/acme/jobs/1", postedAt: "2026-09-20", description: longText,
+      applyUrl: "https://boards.greenhouse.io/acme/jobs/1/apply", postingUrl: "https://boards.greenhouse.io/acme/jobs/1",
+      postedAt: "2026-09-20", description: longText,
     });
   });
 

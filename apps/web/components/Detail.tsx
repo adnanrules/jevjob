@@ -36,7 +36,12 @@ const PLACEHOLDER: Record<Verdict, string> = {
   does_not_meet: "not on your resume",
 };
 
-export function Detail({ r, onClose }: { r: RankedJob; onClose: () => void }) {
+export function Detail({ r, tab, onTab, onClose }: {
+  r: RankedJob;
+  tab: "match" | "posting";
+  onTab: (tab: "match" | "posting") => void;
+  onClose: () => void;
+}) {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
     window.addEventListener("keydown", onKey);
@@ -74,6 +79,26 @@ export function Detail({ r, onClose }: { r: RankedJob; onClose: () => void }) {
           <button className="close" onClick={onClose} aria-label="Close">×</button>
         </div>
 
+        <div className="tabs" role="tablist">
+          <button role="tab" aria-selected={tab === "match"} onClick={() => onTab("match")}>Your match</button>
+          <button role="tab" aria-selected={tab === "posting"} onClick={() => onTab("posting")}>Posting</button>
+        </div>
+
+        {tab === "posting" ? (
+          <div className="posting" role="tabpanel">
+            <div className="posting-meta">
+              {r.job.postedAt && <span>Posted {r.job.postedAt}</span>}
+              <a className="apply" href={r.job.postingUrl ?? r.job.applyUrl} target="_blank" rel="noopener noreferrer">
+                Open on {new URL(r.job.postingUrl ?? r.job.applyUrl).hostname.replace(/^www\./, "")} ↗
+              </a>
+            </div>
+            <div className="posting-text">{r.job.description}</div>
+            <div className="d-foot">
+              <a className="btn" href={r.job.applyUrl} target="_blank" rel="noopener noreferrer">Apply on {r.job.company}&rsquo;s site ↗</a>
+            </div>
+          </div>
+        ) : (
+        <div role="tabpanel">
         <div className="d-stats">
           <div><b style={{ color: tier.color }}>{tier.label}</b>verdict</div>
           <div><b>{req.met}/{req.total}</b>required met{req.unclear ? `, ${req.unclear} unclear` : ""}</div>
@@ -114,6 +139,8 @@ export function Detail({ r, onClose }: { r: RankedJob; onClose: () => void }) {
           <a className="btn" href={r.job.applyUrl} target="_blank" rel="noopener noreferrer">Apply on {r.job.company}&rsquo;s site ↗</a>
         </div>
         <p className="d-note">Percentages are Jev&rsquo;s confidence in each verdict, not a chance of being hired.</p>
+        </div>
+        )}
       </motion.aside>
     </>
   );

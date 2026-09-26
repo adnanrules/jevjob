@@ -160,7 +160,7 @@ button { font: inherit; color: inherit; cursor: pointer; }
 
 .board { border-top: 1px solid var(--line); }
 .row {
-  display: grid; grid-template-columns: 64px 36px minmax(0, 1fr) 150px 52px 76px; gap: 18px; align-items: center;
+  display: grid; grid-template-columns: 64px 36px minmax(0, 1fr) 150px 52px 116px; gap: 18px; align-items: center;
   padding: 14px 8px 14px 0; border-bottom: 1px solid var(--line); cursor: pointer; transition: background 0.2s var(--ease);
   background: rgba(10, 11, 13, 0.6);
 }
@@ -172,6 +172,15 @@ button { font: inherit; color: inherit; cursor: pointer; }
 .who .sub { color: var(--muted); font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .unread { font-size: 12px; color: var(--faint); }
 .cov { font-family: var(--font-mono); font-size: 12px; color: var(--muted); text-align: right; }
+.row-actions { justify-self: end; display: flex; align-items: center; gap: 16px; }
+.view { background: none; border: 0; padding: 6px 0; font-size: 13px; color: var(--muted); border-bottom: 1px solid transparent; transition: color 0.2s, border-color 0.2s; }
+.view:hover { color: var(--ink); border-bottom-color: var(--line-2); }
+.tabs { display: flex; gap: 22px; margin-top: 24px; border-bottom: 1px solid var(--line); }
+.tabs button { background: none; border: 0; padding: 0 0 10px; font-size: 13.5px; color: var(--muted); border-bottom: 1.5px solid transparent; margin-bottom: -1px; }
+.tabs button[aria-selected="true"] { color: var(--ink); border-bottom-color: var(--ink); }
+.posting { margin-top: 20px; }
+.posting-meta { display: flex; gap: 18px; align-items: center; flex-wrap: wrap; color: var(--muted); font-size: 13px; margin-bottom: 18px; }
+.posting-text { white-space: pre-wrap; font-size: 14px; line-height: 1.65; color: var(--ink-2); }
 .apply { justify-self: end; font-size: 13px; color: var(--ink-2); text-decoration: none; padding: 6px 0; border-bottom: 1px solid var(--line-2); transition: color 0.2s, border-color 0.2s; }
 .apply:hover { color: var(--ink); border-bottom-color: var(--ink-2); }
 .empty { color: var(--faint); padding: 40px 0; font-size: 14px; }

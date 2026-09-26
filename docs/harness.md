@@ -15,8 +15,8 @@ you ─▶ harness LLM ─▶ JevJob MCP tools ─▶ Jev (1 call / posting) ─
 
 | MCP tool | CLI (`npm run jevjob -- …`) | What it does |
 |---|---|---|
-| `import_from_joboid` | `joboid "<query>" [--location L] [--remote] [--posted 24h\|7d\|30d\|3month] [--limit N] [--keep]` | Live postings from company career sites via Joboid, full descriptions included. Starts a new search session unless `keep` |
-| `more_jobs` | `more` | Reruns the session's searches with the same parameters and swaps in postings you haven't seen yet |
+| `find_jobs` | `find "<what>" [--location L] [--remote] [--posted 24h\|7d\|30d\|3month] [--count N] [--keep]` | Runs a search plan (titles, level, locations incl. suburbs, remote, window, count) against every company Joboid tracks, checks each full posting, and discovers more companies when results are thin. In a harness the chat model writes the plan; the CLI builds one from keywords |
+| `more_jobs` | `more` | Reruns the same plans and swaps in postings you haven't seen yet |
 | `load_jobs` | `load <file.json\|->` | Postings the harness found itself. A new search replaces the pool unless `keep`/`replace=false` |
 | `open_app` | `open` | Starts the web app if needed and opens it in your browser |
 | `rank` | `rank <resume.md> [--engine jev\|rules] [--top N] [--json]` | Compact ranking for the chat: tiers, apply links, blockers, gaps |

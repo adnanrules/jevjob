@@ -12,6 +12,8 @@ export interface RawJob {
   location: string;
   /** The employer's own careers page whenever possible, not an aggregator. */
   applyUrl: string;
+  /** The listing itself, when it's a different page from the application form. */
+  postingUrl?: string;
   /** ISO date (YYYY-MM-DD). */
   postedAt?: string;
   /** Plain-text description. Requirement extraction reads this. */

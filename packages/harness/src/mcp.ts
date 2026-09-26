@@ -1,23 +1,21 @@
 // JevJob as an MCP server (stdio). Works in any harness that speaks MCP: Claude Desktop/Code, Codex, oh-my-pi…
-// The harness LLM does what it's good at (finding postings, talking to you); JevJob does the repetitive
-// per-requirement judging with Jev, so your chat model's usage isn't spent grading every bullet point.
+// The harness model does what it's good at: understanding the request and writing a search plan (titles employers
+// use, a metro's suburbs, the level implied by "junior"). JevJob does the repetitive work: finding and checking
+// postings, then judging every requirement with Jev. Your chat model never reads the postings.
 import { readFileSync } from "node:fs";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { z } from "zod";
-import {
-  clearJobs, currentJobs, importFromJoboid, jevAvailable, joboidDir, loadJobs, moreFromJoboid, openApp, rankResume, APP_URL,
-} from "./index";
+import { clearJobs, currentJobs, findJobs, jevAvailable, joboidDir, loadJobs, moreJobs, openApp, rankResume, APP_URL } from "./index";
 
 const server = new McpServer(
-  { name: "jevjob", version: "0.1.0" },
+  { name: "jevjob", version: "0.2.0" },
   {
     instructions: [
-      "JevJob ranks job postings against a resume with one small typed classification per requirement.",
-      "Typical flow: (1) get fresh postings, either import_from_joboid (company career sites, no LLM tokens) or",
-      "load_jobs with postings you found yourself (full description + the employer's own apply link, replace=true",
-      "for a new search). (2) open_app to show the user the animated ranking, or rank to get a compact summary",
-      "in chat. Never claim a probability of being hired; tiers reflect requirement coverage.",
+      "JevJob ranks job postings against a resume, one small typed classification per requirement.",
+      "To search: turn the user's words into a plan and call find_jobs. Don't ask them for parameters; infer them.",
+      "Then call open_app. For 'more' / 'different jobs', call more_jobs. Never read or rank the postings yourself.",
+      "Never claim a probability of being hired; tiers reflect requirement coverage.",
     ].join(" "),
   },
 );
@@ -34,52 +32,60 @@ server.registerTool(
 );
 
 server.registerTool(
-  "load_jobs",
+  "find_jobs",
   {
-    title: "Load job postings",
-    description:
-      "Give JevJob postings to rank. Each needs id, company, title, the full description text, and applyUrl (the employer's own site, not LinkedIn/Indeed). Joboid's `job` output is accepted as-is; closed postings are rejected.",
+    title: "Find job postings",
+    description: [
+      "Find live postings on company career sites for a search plan you write from the user's request, and load them.",
+      "Infer everything; don't ask. Titles: 4-12 titles employers actually use for the role (for 'junior software",
+      "engineer': software engineer, software developer, associate software engineer, application developer, full stack",
+      "engineer, backend engineer…). Level: entry for junior/new grad/entry level/associate, senior for senior/staff/lead,",
+      "else any. Locations: for a city, include its metro's suburbs and nearby cities (Chicago → Evanston, Skokie,",
+      "Schaumburg, Naperville, Oak Brook, Deerfield, Northbrook, Rosemont…); empty for anywhere. Remote: true if they want",
+      "remote too. Posted: only if they gave a time window. Count: their number, else 50.",
+      "A new search replaces the pool (keep=false); use keep=true to add a second plan (e.g. 'Chicago or remote in the",
+      "midwest' is one plan for Chicago and one remote plan). When results are thin, JevJob discovers more companies.",
+    ].join(" "),
     inputSchema: {
-      jobs: z.array(z.record(z.string(), z.unknown())).min(1).describe("Postings: {id, company, title, location, applyUrl, postedAt?, description}"),
-      replace: z.boolean().default(true).describe("true: start a fresh pool (a new search). false: merge into the current pool."),
-      max_age_days: z.number().int().positive().optional().describe("Optionally drop postings older than this"),
-    },
-  },
-  async ({ jobs, replace, max_age_days }) => json(loadJobs(jobs, { replace, maxAgeDays: max_age_days })),
-);
-
-server.registerTool(
-  "import_from_joboid",
-  {
-    title: "Import postings from Joboid",
-    description:
-      "Search Joboid (live postings from company career sites) and load the matches with full descriptions. Uses no LLM tokens. " +
-      "A search without keep=true starts a new session and replaces the pool; the open app notices and offers to re-rank.",
-    inputSchema: {
-      query: z.string().min(1).describe("Keywords, e.g. 'junior software engineer'"),
-      location: z.string().optional(),
-      remote: z.boolean().optional(),
+      titles: z.array(z.string().min(2)).min(1).max(20).describe("Job titles as employers write them"),
+      level: z.enum(["entry", "mid", "senior", "any"]).default("any"),
+      locations: z.array(z.string()).max(60).default([]).describe("Cities/areas incl. suburbs; empty = anywhere"),
+      remote: z.boolean().default(false).describe("Also accept remote postings"),
       posted: z.enum(["24h", "7d", "30d", "3month"]).optional().describe("Only postings that went up within this window"),
-      limit: z.number().int().min(1).max(100).default(25).describe("How many postings this search adds"),
-      keep: z.boolean().default(false).describe("Add to the current pool and session (a second search) instead of replacing it"),
+      count: z.number().int().min(1).max(200).default(50),
+      internships: z.boolean().default(false),
+      keep: z.boolean().default(false).describe("Add to the current pool instead of starting a new search"),
     },
   },
-  async (args) => json(await importFromJoboid(args)),
+  async ({ keep, ...plan }) => json(await findJobs(plan, { keep })),
 );
 
 server.registerTool(
   "more_jobs",
   {
     title: "More postings, same search",
-    description:
-      "Rerun the current session's Joboid searches with exactly the same parameters, and replace the pool with postings the user hasn't seen yet. Reports `exhausted` when there are no more.",
+    description: "Rerun the current search plans exactly, and replace the pool with postings the user hasn't seen yet. Reports `exhausted` when there are none left.",
   },
-  async () => json(await moreFromJoboid()),
+  async () => json(await moreJobs()),
+);
+
+server.registerTool(
+  "load_jobs",
+  {
+    title: "Load postings you found yourself",
+    description:
+      "Only for postings from somewhere other than find_jobs (e.g. a link the user pasted). Each needs id, company, title, the full description, and applyUrl on the employer's own site. Closed postings are rejected.",
+    inputSchema: {
+      jobs: z.array(z.record(z.string(), z.unknown())).min(1),
+      replace: z.boolean().default(true),
+    },
+  },
+  async ({ jobs, replace }) => json(loadJobs(jobs, { replace })),
 );
 
 server.registerTool(
   "open_app",
-  { title: "Open the JevJob app", description: "Start the JevJob web app if needed and open it in the user's browser, where they paste a resume and watch the ranking." },
+  { title: "Open the JevJob app", description: "Start the JevJob web app if needed and open it in the user's browser. An already-open app notices a new pool and offers to re-rank." },
   async () => json(await openApp()),
 );
 
@@ -87,7 +93,7 @@ server.registerTool(
   "rank",
   {
     title: "Rank the pool against a resume",
-    description: "Rank every loaded posting against a resume and return a compact summary: tier counts and the top jobs with apply links, blockers and gaps.",
+    description: "Only when the user wants results in chat instead of the app: a compact summary of tiers and the top jobs with apply links, blockers and gaps.",
     inputSchema: {
       resume_text: z.string().optional().describe("The resume as plain text or markdown"),
       resume_path: z.string().optional().describe("Or a path to a .md/.txt resume file"),

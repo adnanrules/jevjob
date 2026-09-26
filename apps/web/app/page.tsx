@@ -3,7 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import { AnimatePresence, LayoutGroup, motion, MotionGlobalConfig } from "motion/react";
 import { rankJobs, type Tier } from "@jevjob/core";
 import { Background } from "@/components/Background";
-import { Board } from "@/components/Board";
+import { Board, type DetailTab } from "@/components/Board";
 import { Detail } from "@/components/Detail";
 import { Landing, type Setup } from "@/components/Landing";
 import { Mark } from "@/components/Mark";
@@ -24,6 +24,7 @@ export default function Page() {
   const [aggressiveness, setAggressiveness] = useState(0.5);
   const [filter, setFilter] = useState<Tier | null>(null);
   const [openId, setOpenId] = useState<string | null>(null);
+  const [openTab, setOpenTab] = useState<DetailTab>("match");
   const [dragging, setDragging] = useState(false);
   const [lastResume, setLastResume] = useState<string | null>(null);
   const [pool, setPool] = useState<{ version: string; source: "harness" | "demo"; jobCount: number } | null>(null);
@@ -135,14 +136,14 @@ export default function Page() {
                   <h2>{settled ? "Best fit first" : `Ranking ${ranked.length} of ${jobs.length}`}</h2>
                   <Slider value={aggressiveness} onChange={setAggressiveness} />
                 </div>
-                <Board ranked={visible} onOpen={setOpenId} />
+                <Board ranked={visible} onOpen={(id, tab) => { setOpenId(id); setOpenTab(tab); }} />
               </LayoutGroup>
             </motion.div>
           )}
         </AnimatePresence>
       </main>
 
-      <AnimatePresence>{open && <Detail key={open.job.id} r={open} onClose={() => setOpenId(null)} />}</AnimatePresence>
+      <AnimatePresence>{open && <Detail key={open.job.id} r={open} tab={openTab} onTab={setOpenTab} onClose={() => setOpenId(null)} />}</AnimatePresence>
     </>
   );
 }
