@@ -1,0 +1,47 @@
+[
+  {
+    "id": "wabash-analytics:eval:6006",
+    "company": "Wabash Analytics",
+    "title": "Data Analyst",
+    "location": "Chicago, IL (Hybrid)",
+    "applyUrl": "https://wabash-analytics.example/careers/6006",
+    "postedAt": "2026-09-19",
+    "description": "Wabash Analytics helps regional retailers understand their customers.\n\nWhat you'll do\n- Build recurring reports and dashboards for client teams\n- Answer ad-hoc questions with SQL\n\nRequirements\n- Bachelor's degree in a quantitative field (math, statistics, economics, computer science)\n- Strong SQL\n- Experience with Python or R\n- Experience with Tableau or Power BI\n- 1+ years of experience in an analytics role\n\nNice to have\n- dbt\n- Snowflake"
+  },
+  {
+    "id": "cardinal-cloud:eval:7007",
+    "company": "Cardinal Cloud",
+    "title": "Site Reliability Engineer",
+    "location": "Remote (US)",
+    "applyUrl": "https://cardinalcloud.example/jobs/7007",
+    "postedAt": "2026-09-21",
+    "description": "Keep our payments platform fast and boring.\n\nResponsibilities\n- Run and scale Kubernetes clusters across regions\n- Automate everything with Terraform\n\nQualifications\n- 3+ years in SRE, DevOps, or backend engineering roles\n- Production experience with Kubernetes and Terraform\n- AWS or GCP\n- Strong Linux systems administration\n- Willingness to join an on-call rotation\n\nNice to have\n- Go\n- Prometheus and Grafana"
+  },
+  {
+    "id": "harbor-point-health:eval:8008",
+    "company": "Harbor Point Health",
+    "title": "Junior Frontend Developer",
+    "location": "Remote (US)",
+    "applyUrl": "https://harborpoint.example/careers/8008",
+    "postedAt": "2026-09-23",
+    "description": "Help patients book care without calling anyone.\n\nWhat you'll do\n- Build UI features in our React app\n- Pair with senior engineers on code review\n\nWhat you need\n- Experience with React and TypeScript\n- Solid HTML and CSS\n- A portfolio of shipped web projects\n- A degree is not required\n\nNice to have\n- Next.js\n- Accessibility (WCAG) experience"
+  },
+  {
+    "id": "meridian-bank:eval:9009",
+    "company": "Meridian Bank",
+    "title": "Software Engineer II",
+    "location": "Chicago, IL",
+    "applyUrl": "https://careers.meridianbank.example/req/9009",
+    "postedAt": "2026-09-17",
+    "description": "Build the services behind Meridian's mobile banking app.\n\nMinimum qualifications\n- 3+ years of professional experience with Java\n- Spring Boot\n- Must be authorized to work in the United States without visa sponsorship\n- Bachelor's degree in Computer Science or a related field\n\nPreferred qualifications\n- Kafka\n- AWS"
+  },
+  {
+    "id": "northwind-ai:eval:1010",
+    "company": "Northwind AI Lab",
+    "title": "Applied AI Engineer",
+    "location": "Remote (US)",
+    "applyUrl": "https://northwind-ai.example/jobs/1010",
+    "postedAt": "2026-09-24",
+    "description": "Ship LLM features to 2,000 enterprise customers.\n\nYou will\n- Build retrieval and agent features on top of foundation models\n- Design evals for model behavior\n\nRequirements\n- 1+ years building production software\n- Strong Python\n- Experience building applications with LLMs\n- Familiarity with RAG and vector databases\n- Bachelor's degree or equivalent practical experience\n\nNice to have\n- PyTorch\n- Experience evaluating ML systems"
+  }
+]

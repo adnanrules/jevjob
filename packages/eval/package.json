@@ -1,0 +1,8 @@
+{
+  "name": "@jevjob/eval",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "@jevjob/core": "*"
+  }
+}

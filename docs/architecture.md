@@ -65,4 +65,6 @@ jevjob/
 - [x] M1 · Rule-based extraction: posting text → `Requirement[]`, resume text → `Resume`
 - [x] M1 · Rule-based assessor: `Resume` + `Requirement` → `Assessment` (`npm run demo` prints it)
 - [x] M1 · Policy: `AssessedJob` + aggressiveness → `RankedJob`, checked against `fixtures/expected.json`
-- [ ] M2 · Eval: 30–50 labeled resume/job pairs, a metrics runner, real baseline numbers for the rules
+- [x] M2 · Eval: 40 labeled resume/job pairs, a metrics runner, real baseline numbers for the rules
+  (`packages/eval/results/rules.md`)
+- [ ] M3 · Jev: client + schema-validated outputs, plugged in as an eval `System`, compared against `rules`
