@@ -15,7 +15,8 @@ you ─▶ harness LLM ─▶ JevJob MCP tools ─▶ Jev (1 call / posting) ─
 
 | MCP tool | CLI (`npm run jevjob -- …`) | What it does |
 |---|---|---|
-| `import_from_joboid` | `joboid "<query>" [--location L] [--remote] [--days N] [--limit N] [--keep]` | Live postings from company career sites via [Joboid](../../..), full descriptions included |
+| `import_from_joboid` | `joboid "<query>" [--location L] [--remote] [--posted 24h\|7d\|30d\|3month] [--limit N] [--keep]` | Live postings from company career sites via Joboid, full descriptions included. Starts a new search session unless `keep` |
+| `more_jobs` | `more` | Reruns the session's searches with the same parameters and swaps in postings you haven't seen yet |
 | `load_jobs` | `load <file.json\|->` | Postings the harness found itself. A new search replaces the pool unless `keep`/`replace=false` |
 | `open_app` | `open` | Starts the web app if needed and opens it in your browser |
 | `rank` | `rank <resume.md> [--engine jev\|rules] [--top N] [--json]` | Compact ranking for the chat: tiers, apply links, blockers, gaps |
@@ -23,8 +24,13 @@ you ─▶ harness LLM ─▶ JevJob MCP tools ─▶ Jev (1 call / posting) ─
 | `clear_jobs` | `clear` | Forget loaded postings; the app goes back to its fictional demo pool |
 
 Postings are validated on the way in: they need a description and an http(s) apply link, closed postings are
-rejected, and duplicates are merged by id. "Clean out old info" means closed postings and the previous search,
-not old dates: plenty of two-month-old postings are still open. An age cutoff is available if you ask for one.
+rejected, and duplicates are merged by id. A new search replaces the previous pool. `posted` is enforced on each
+full posting's own date (Joboid's search keeps undated postings, so JevJob fetches extra candidates and keeps going
+until enough fall inside the window).
+
+**The open app follows the pool.** It checks for a new pool every few seconds. On the start screen the count just
+updates; on a ranked board a notice offers to re-rank with the same resume. So you can leave the app open and
+run `/jevjob …` or `/jevjob more` from your chat as often as you like.
 
 ## Setup
 
