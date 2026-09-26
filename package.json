@@ -13,7 +13,8 @@
     "test:watch": "vitest",
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "demo": "tsx scripts/demo.ts",
-    "eval": "tsx packages/eval/src/run.ts"
+    "eval": "tsx packages/eval/src/run.ts",
+    "compare": "tsx scripts/compare.ts"
   },
   "devDependencies": {
     "@types/node": "^26.6.2",
