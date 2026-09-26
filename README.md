@@ -7,9 +7,9 @@ Ranks job postings against a resume using small, bounded classifications instead
 
 ## Evaluation
 
-40 hand-labeled resume/job pairs (4 fictional candidates × 10 postings) live in
+40 hand-labeled resume/job pairs (4 fictional candidates Ã— 10 postings) live in
 [packages/eval/dataset](packages/eval/dataset). `npm run eval` scores a system on them and writes
-[packages/eval/results/](packages/eval/results). Every number reported about this project comes from those files.
+[packages/eval/results/](packages/eval/results). Every number reported about this project comes from those files, and [docs/eval-log.md](docs/eval-log.md) is the lab notebook explaining each run.
 
 ## Develop
 
