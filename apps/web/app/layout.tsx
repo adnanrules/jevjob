@@ -1,23 +1,20 @@
 import type { Metadata } from "next";
-import { IBM_Plex_Mono, Instrument_Sans, Instrument_Serif } from "next/font/google";
+import { IBM_Plex_Mono, IBM_Plex_Sans, IBM_Plex_Sans_Condensed } from "next/font/google";
 import "./globals.css";
 
-const serif = Instrument_Serif({ weight: "400", style: ["normal", "italic"], subsets: ["latin"], variable: "--font-serif" });
-const sans = Instrument_Sans({ subsets: ["latin"], variable: "--font-sans" });
+const sans = IBM_Plex_Sans({ weight: ["400", "500", "600"], subsets: ["latin"], variable: "--font-sans" });
+const condensed = IBM_Plex_Sans_Condensed({ weight: ["500", "600"], subsets: ["latin"], variable: "--font-condensed" });
 const mono = IBM_Plex_Mono({ weight: ["400", "500"], subsets: ["latin"], variable: "--font-mono" });
 
 export const metadata: Metadata = {
   title: "JevJob",
-  description: "Ranks job postings against your resume, one typed question per requirement.",
+  description: "Rank job postings against your resume, one requirement at a time.",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`${serif.variable} ${sans.variable} ${mono.variable}`}>
-      <body>
-        <div className="backdrop" aria-hidden />
-        {children}
-      </body>
+    <html lang="en" className={`${sans.variable} ${condensed.variable} ${mono.variable}`}>
+      <body>{children}</body>
     </html>
   );
 }

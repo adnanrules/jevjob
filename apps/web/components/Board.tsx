@@ -6,12 +6,12 @@ import { Barcode } from "./Barcode";
 import { Chip } from "./Chip";
 
 export function Board({ ranked, onOpen }: { ranked: RankedJob[]; onOpen: (id: string) => void }) {
-  if (ranked.length === 0) return <div className="empty">Ranked jobs land here as they come out of the machine.</div>;
   return (
     <div className="board">
       <AnimatePresence initial={false}>
         {ranked.map((r) => <Row key={r.job.id} r={r} onOpen={onOpen} />)}
       </AnimatePresence>
+      {ranked.length === 0 && <div className="empty">Nothing here yet.</div>}
     </div>
   );
 }
@@ -24,32 +24,27 @@ function Row({ r, onOpen }: { r: RankedJob; onOpen: (id: string) => void }) {
       layout="position"
       className="row"
       style={{ ["--tier" as string]: tier.color }}
-      initial={{ opacity: 0, scale: 0.98 }}
-      animate={{ opacity: 1, scale: 1 }}
-      exit={{ opacity: 0, scale: 0.98, transition: { duration: 0.15 } }}
-      transition={{ type: "spring", stiffness: 380, damping: 36 }}
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0, transition: { duration: 0.15 } }}
+      transition={{ type: "spring", stiffness: 420, damping: 40 }}
       onClick={() => onOpen(r.job.id)}
       onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && onOpen(r.job.id)}
       role="button"
       tabIndex={0}
-      aria-label={`#${r.rank} ${tier.label}: ${r.job.title} at ${r.job.company}`}
+      aria-label={`${r.rank}. ${tier.label}. ${r.job.title} at ${r.job.company}`}
     >
-      <motion.div key={`${r.rank}-${r.tier}`} className="rank" initial={{ opacity: 0.2, y: -6 }} animate={{ opacity: 1, y: 0 }}>
+      <motion.div key={r.rank} className="rank" initial={{ opacity: 0.3, y: -4 }} animate={{ opacity: 1, y: 0 }} title={tier.label}>
         {r.rank}
       </motion.div>
       <Chip id={r.job.id} company={r.job.company} />
       <div className="who">
         <div className="title">{r.job.title}</div>
-        <div className="sub">{r.job.company} · {r.job.location}</div>
+        <div className="sub">{r.job.company}{r.job.location ? ` · ${r.job.location}` : ""}</div>
       </div>
-      <Barcode assessed={r} revealed />
-      <div className="cov">
-        <span className="tier-pill">{tier.label}</span>
-        <span className="n">
-          {req.met}/{req.total} required{req.unclear ? <span className="q"> · {req.unclear} unclear</span> : null}
-        </span>
-      </div>
-      <a className="apply-link" href={r.job.applyUrl} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()}>
+      {r.requirements.length ? <Barcode assessed={r} revealed /> : <span className="unread">no requirements listed</span>}
+      <div className="cov" title="Required qualifications you meet">{req.total ? `${req.met}/${req.total}` : "–"}</div>
+      <a className="apply" href={r.job.applyUrl} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()}>
         Apply ↗
       </a>
     </motion.div>
