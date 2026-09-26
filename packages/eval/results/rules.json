@@ -1,6 +1,6 @@
 {
   "system": "rules",
-  "commit": "6b3c661",
+  "commit": "7ab0d48",
   "dirty": true,
   "splits": {
     "test": {
@@ -34,7 +34,7 @@
         "of": 16
       },
       "notExtracted": 0,
-      "meanLatencyMs": 0.06568333333333795,
+      "meanLatencyMs": 0.053877777777777344,
       "callsPerJob": 0,
       "inputTokensPerJob": 0,
       "confusion": {
@@ -106,7 +106,7 @@
         "of": 30
       },
       "notExtracted": 0,
-      "meanLatencyMs": 0.12162999999999898,
+      "meanLatencyMs": 0.11239000000000203,
       "callsPerJob": 0,
       "inputTokensPerJob": 0,
       "confusion": {
@@ -178,7 +178,7 @@
         "of": 46
       },
       "notExtracted": 0,
-      "meanLatencyMs": 0.10426724137931107,
+      "meanLatencyMs": 0.09423103448275989,
       "callsPerJob": 0,
       "inputTokensPerJob": 0,
       "confusion": {
@@ -239,7 +239,7 @@
           "predicted": "meets"
         }
       ],
-      "latencyMs": 1.7425999999999817,
+      "latencyMs": 1.6458000000000084,
       "calls": 0,
       "inputTokens": 0,
       "cached": false
@@ -267,7 +267,7 @@
           "predicted": "unclear"
         }
       ],
-      "latencyMs": 0.2265999999999906,
+      "latencyMs": 0.19820000000001414,
       "calls": 0,
       "inputTokens": 0,
       "cached": false
@@ -290,7 +290,7 @@
           "predicted": "does_not_meet"
         }
       ],
-      "latencyMs": 0.11109999999999332,
+      "latencyMs": 0.6415000000000077,
       "calls": 0,
       "inputTokens": 0,
       "cached": false
@@ -307,7 +307,7 @@
         "blockers": []
       },
       "checks": [],
-      "latencyMs": 0.08099999999998886,
+      "latencyMs": 0.09279999999998267,
       "calls": 0,
       "inputTokens": 0,
       "cached": false
@@ -341,7 +341,7 @@
           "predicted": "does_not_meet"
         }
       ],
-      "latencyMs": 0.09810000000001651,
+      "latencyMs": 0.09480000000002065,
       "calls": 0,
       "inputTokens": 0,
       "cached": false
@@ -364,7 +364,7 @@
           "predicted": "unclear"
         }
       ],
-      "latencyMs": 0.7738999999999976,
+      "latencyMs": 0.06860000000000355,
       "calls": 0,
       "inputTokens": 0,
       "cached": false
@@ -381,7 +381,7 @@
         "blockers": []
       },
       "checks": [],
-      "latencyMs": 0.09599999999997522,
+      "latencyMs": 0.06829999999999359,
       "calls": 0,
       "inputTokens": 0,
       "cached": false
@@ -409,7 +409,7 @@
           "predicted": "meets"
         }
       ],
-      "latencyMs": 0.0747000000000071,
+      "latencyMs": 0.06730000000001723,
       "calls": 0,
       "inputTokens": 0,
       "cached": false
@@ -432,7 +432,7 @@
           "predicted": "unclear"
         }
       ],
-      "latencyMs": 0.06080000000000041,
+      "latencyMs": 0.057599999999979445,
       "calls": 0,
       "inputTokens": 0,
       "cached": false
@@ -449,7 +449,7 @@
         "blockers": []
       },
       "checks": [],
-      "latencyMs": 0.10499999999998977,
+      "latencyMs": 0.07940000000002101,
       "calls": 0,
       "inputTokens": 0,
       "cached": false
@@ -472,7 +472,7 @@
           "predicted": "does_not_meet"
         }
       ],
-      "latencyMs": 0.09019999999998163,
+      "latencyMs": 0.073599999999999,
       "calls": 0,
       "inputTokens": 0,
       "cached": false
@@ -500,7 +500,7 @@
           "predicted": "meets"
         }
       ],
-      "latencyMs": 0.06570000000002096,
+      "latencyMs": 0.06359999999997967,
       "calls": 0,
       "inputTokens": 0,
       "cached": false
@@ -517,7 +517,7 @@
         "blockers": []
       },
       "checks": [],
-      "latencyMs": 0.052300000000002456,
+      "latencyMs": 0.048900000000003274,
       "calls": 0,
       "inputTokens": 0,
       "cached": false
@@ -534,7 +534,7 @@
         "blockers": []
       },
       "checks": [],
-      "latencyMs": 0.0630000000000166,
+      "latencyMs": 0.06049999999999045,
       "calls": 0,
       "inputTokens": 0,
       "cached": false
@@ -557,7 +557,7 @@
         ]
       },
       "checks": [],
-      "latencyMs": 0.05189999999998918,
+      "latencyMs": 0.05320000000000391,
       "calls": 0,
       "inputTokens": 0,
       "cached": false
@@ -574,7 +574,7 @@
         "blockers": []
       },
       "checks": [],
-      "latencyMs": 0.04290000000000305,
+      "latencyMs": 0.041300000000006776,
       "calls": 0,
       "inputTokens": 0,
       "cached": false
@@ -591,7 +591,7 @@
         "blockers": []
       },
       "checks": [],
-      "latencyMs": 0.04269999999999641,
+      "latencyMs": 0.04220000000000823,
       "calls": 0,
       "inputTokens": 0,
       "cached": false
@@ -619,7 +619,7 @@
           "predicted": "unclear"
         }
       ],
-      "latencyMs": 0.041900000000026694,
+      "latencyMs": 0.04279999999999973,
       "calls": 0,
       "inputTokens": 0,
       "cached": false
@@ -636,7 +636,7 @@
         "blockers": []
       },
       "checks": [],
-      "latencyMs": 0.039299999999997226,
+      "latencyMs": 0.037399999999990996,
       "calls": 0,
       "inputTokens": 0,
       "cached": false
@@ -664,7 +664,7 @@
           "predicted": "meets"
         }
       ],
-      "latencyMs": 0.05340000000001055,
+      "latencyMs": 0.05320000000000391,
       "calls": 0,
       "inputTokens": 0,
       "cached": false
@@ -681,7 +681,7 @@
         "blockers": []
       },
       "checks": [],
-      "latencyMs": 0.05660000000000309,
+      "latencyMs": 0.05670000000000641,
       "calls": 0,
       "inputTokens": 0,
       "cached": false
@@ -704,7 +704,7 @@
           "predicted": "does_not_meet"
         }
       ],
-      "latencyMs": 0.047100000000000364,
+      "latencyMs": 0.05570000000000164,
       "calls": 0,
       "inputTokens": 0,
       "cached": false
@@ -727,7 +727,7 @@
           "predicted": "does_not_meet"
         }
       ],
-      "latencyMs": 0.05830000000000268,
+      "latencyMs": 0.05530000000001678,
       "calls": 0,
       "inputTokens": 0,
       "cached": false
@@ -744,7 +744,7 @@
         "blockers": []
       },
       "checks": [],
-      "latencyMs": 0.04390000000000782,
+      "latencyMs": 0.04480000000000928,
       "calls": 0,
       "inputTokens": 0,
       "cached": false
@@ -773,7 +773,7 @@
           "predicted": "meets"
         }
       ],
-      "latencyMs": 0.04040000000000532,
+      "latencyMs": 0.04059999999998354,
       "calls": 0,
       "inputTokens": 0,
       "cached": false
@@ -790,7 +790,7 @@
         "blockers": []
       },
       "checks": [],
-      "latencyMs": 0.04069999999998686,
+      "latencyMs": 0.041400000000010095,
       "calls": 0,
       "inputTokens": 0,
       "cached": false
@@ -818,7 +818,7 @@
           "predicted": "unclear"
         }
       ],
-      "latencyMs": 0.052099999999995816,
+      "latencyMs": 0.04370000000000118,
       "calls": 0,
       "inputTokens": 0,
       "cached": false
@@ -835,7 +835,7 @@
         "blockers": []
       },
       "checks": [],
-      "latencyMs": 0.035499999999984766,
+      "latencyMs": 0.036100000000004684,
       "calls": 0,
       "inputTokens": 0,
       "cached": false
@@ -858,7 +858,7 @@
           "predicted": "unclear"
         }
       ],
-      "latencyMs": 0.03750000000002274,
+      "latencyMs": 0.03690000000000282,
       "calls": 0,
       "inputTokens": 0,
       "cached": false
@@ -898,7 +898,7 @@
           "predicted": "meets"
         }
       ],
-      "latencyMs": 0.04729999999997858,
+      "latencyMs": 0.048399999999986676,
       "calls": 0,
       "inputTokens": 0,
       "cached": false
@@ -915,7 +915,7 @@
         "blockers": []
       },
       "checks": [],
-      "latencyMs": 0.0408999999999935,
+      "latencyMs": 0.06080000000000041,
       "calls": 0,
       "inputTokens": 0,
       "cached": false
@@ -932,7 +932,7 @@
         "blockers": []
       },
       "checks": [],
-      "latencyMs": 0.037499999999994316,
+      "latencyMs": 0.045100000000019236,
       "calls": 0,
       "inputTokens": 0,
       "cached": false
@@ -960,7 +960,7 @@
           "predicted": "meets"
         }
       ],
-      "latencyMs": 0.04870000000002506,
+      "latencyMs": 0.061199999999985266,
       "calls": 0,
       "inputTokens": 0,
       "cached": false
@@ -983,7 +983,7 @@
         ]
       },
       "checks": [],
-      "latencyMs": 0.06229999999999336,
+      "latencyMs": 0.050299999999992906,
       "calls": 0,
       "inputTokens": 0,
       "cached": false
@@ -1011,7 +1011,7 @@
           "predicted": "meets"
         }
       ],
-      "latencyMs": 0.05370000000002051,
+      "latencyMs": 0.050399999999996226,
       "calls": 0,
       "inputTokens": 0,
       "cached": false
@@ -1028,7 +1028,7 @@
         "blockers": []
       },
       "checks": [],
-      "latencyMs": 0.05079999999998108,
+      "latencyMs": 0.05279999999999063,
       "calls": 0,
       "inputTokens": 0,
       "cached": false
@@ -1045,7 +1045,7 @@
         "blockers": []
       },
       "checks": [],
-      "latencyMs": 0.05339999999998213,
+      "latencyMs": 0.04619999999999891,
       "calls": 0,
       "inputTokens": 0,
       "cached": false
@@ -1068,7 +1068,7 @@
           "predicted": "meets"
         }
       ],
-      "latencyMs": 0.04619999999999891,
+      "latencyMs": 0.0408000000000186,
       "calls": 0,
       "inputTokens": 0,
       "cached": false
@@ -1091,7 +1091,7 @@
           "predicted": "meets"
         }
       ],
-      "latencyMs": 0.059899999999998954,
+      "latencyMs": 0.058100000000024465,
       "calls": 0,
       "inputTokens": 0,
       "cached": false
@@ -1124,7 +1124,7 @@
           "predicted": "unclear"
         }
       ],
-      "latencyMs": 0.051000000000016144,
+      "latencyMs": 0.040300000000002,
       "calls": 0,
       "inputTokens": 0,
       "cached": false
@@ -1141,7 +1141,7 @@
         "blockers": []
       },
       "checks": [],
-      "latencyMs": 0.08019999999999072,
+      "latencyMs": 0.06239999999999668,
       "calls": 0,
       "inputTokens": 0,
       "cached": false
@@ -1158,7 +1158,7 @@
         "blockers": []
       },
       "checks": [],
-      "latencyMs": 0.09600000000000364,
+      "latencyMs": 0.07810000000000628,
       "calls": 0,
       "inputTokens": 0,
       "cached": false
@@ -1179,7 +1179,7 @@
         ]
       },
       "checks": [],
-      "latencyMs": 0.05649999999999977,
+      "latencyMs": 0.04569999999998231,
       "calls": 0,
       "inputTokens": 0,
       "cached": false
@@ -1207,7 +1207,7 @@
           "predicted": "unclear"
         }
       ],
-      "latencyMs": 0.0408000000000186,
+      "latencyMs": 0.035899999999998045,
       "calls": 0,
       "inputTokens": 0,
       "cached": false
@@ -1230,7 +1230,7 @@
           "predicted": "meets"
         }
       ],
-      "latencyMs": 0.06690000000000396,
+      "latencyMs": 0.05960000000001742,
       "calls": 0,
       "inputTokens": 0,
       "cached": false
@@ -1247,7 +1247,7 @@
         "blockers": []
       },
       "checks": [],
-      "latencyMs": 0.058099999999996044,
+      "latencyMs": 0.041300000000006776,
       "calls": 0,
       "inputTokens": 0,
       "cached": false
@@ -1270,7 +1270,7 @@
           "predicted": "unclear"
         }
       ],
-      "latencyMs": 0.06040000000001555,
+      "latencyMs": 0.050600000000002865,
       "calls": 0,
       "inputTokens": 0,
       "cached": false
@@ -1300,7 +1300,7 @@
           "predicted": "does_not_meet"
         }
       ],
-      "latencyMs": 0.06499999999999773,
+      "latencyMs": 0.059599999999988995,
       "calls": 0,
       "inputTokens": 0,
       "cached": false
@@ -1321,7 +1321,7 @@
         ]
       },
       "checks": [],
-      "latencyMs": 0.06120000000001369,
+      "latencyMs": 0.0473999999999819,
       "calls": 0,
       "inputTokens": 0,
       "cached": false
@@ -1338,7 +1338,7 @@
         "blockers": []
       },
       "checks": [],
-      "latencyMs": 0.03899999999998727,
+      "latencyMs": 0.03570000000001983,
       "calls": 0,
       "inputTokens": 0,
       "cached": false
@@ -1371,7 +1371,7 @@
           "predicted": "meets"
         }
       ],
-      "latencyMs": 0.06570000000002096,
+      "latencyMs": 0.0654999999999859,
       "calls": 0,
       "inputTokens": 0,
       "cached": false
@@ -1388,7 +1388,7 @@
         "blockers": []
       },
       "checks": [],
-      "latencyMs": 0.0549000000000035,
+      "latencyMs": 0.039600000000007185,
       "calls": 0,
       "inputTokens": 0,
       "cached": false
@@ -1411,7 +1411,7 @@
           "predicted": "unclear"
         }
       ],
-      "latencyMs": 0.11600000000001387,
+      "latencyMs": 0.04939999999999145,
       "calls": 0,
       "inputTokens": 0,
       "cached": false
@@ -1434,7 +1434,7 @@
           "predicted": "unclear"
         }
       ],
-      "latencyMs": 0.05940000000001078,
+      "latencyMs": 0.10120000000000573,
       "calls": 0,
       "inputTokens": 0,
       "cached": false
@@ -1462,7 +1462,7 @@
           "predicted": "meets"
         }
       ],
-      "latencyMs": 0.07120000000000459,
+      "latencyMs": 0.04929999999998813,
       "calls": 0,
       "inputTokens": 0,
       "cached": false
@@ -1479,7 +1479,7 @@
         "blockers": []
       },
       "checks": [],
-      "latencyMs": 0.06790000000000873,
+      "latencyMs": 0.032399999999995543,
       "calls": 0,
       "inputTokens": 0,
       "cached": false
@@ -1496,7 +1496,7 @@
         "blockers": []
       },
       "checks": [],
-      "latencyMs": 0.07209999999997763,
+      "latencyMs": 0.07580000000001519,
       "calls": 0,
       "inputTokens": 0,
       "cached": false

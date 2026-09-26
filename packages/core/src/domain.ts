@@ -14,6 +14,8 @@ export interface RawJob {
   applyUrl: string;
   /** The listing itself, when it's a different page from the application form. */
   postingUrl?: string;
+  /** Pay as the posting states it, e.g. "$89,210 - $144,960 a year". */
+  pay?: string;
   /** ISO date (YYYY-MM-DD). */
   postedAt?: string;
   /** Plain-text description. Requirement extraction reads this. */

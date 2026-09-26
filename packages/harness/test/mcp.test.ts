@@ -1,4 +1,6 @@
 // End-to-end over the real protocol: spawn the server on stdio, connect the official MCP client, call tools.
+import { mkdtempSync } from "node:fs";
+import { tmpdir } from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
@@ -7,6 +9,7 @@ import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js"
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../..");
 const client = new Client({ name: "jevjob-test", version: "0.0.0" });
+const text = (result: Record<string, unknown>) => (result.content as Array<{ text: string }>)[0]!.text;
 
 beforeAll(async () => {
   await client.connect(
@@ -14,6 +17,8 @@ beforeAll(async () => {
       command: process.execPath,
       args: [path.join(ROOT, "node_modules/tsx/dist/cli.mjs"), path.join(ROOT, "packages/harness/src/mcp.ts")],
       cwd: ROOT,
+      // A scratch data folder, so the test never touches the real job pool.
+      env: { ...(process.env as Record<string, string>), JEVJOB_DATA_DIR: mkdtempSync(path.join(tmpdir(), "jevjob-mcp-")) },
     }),
   );
 }, 30_000);
@@ -21,38 +26,40 @@ beforeAll(async () => {
 afterAll(() => client.close());
 
 describe("jevjob MCP server", () => {
-  it("exposes the harness tools", async () => {
+  it("exposes the Indeed-first workflow", async () => {
     const { tools } = await client.listTools();
-    expect(tools.map((t) => t.name).sort()).toEqual(["clear_jobs", "find_jobs", "load_jobs", "more_jobs", "open_app", "rank", "status"]);
+    expect(tools.map((t) => t.name).sort()).toEqual(
+      ["add_jobs", "add_search_results", "clear_jobs", "more_jobs", "open_app", "rank", "start_search", "status"],
+    );
   });
 
   it("answers status as JSON", async () => {
-    const result = await client.callTool({ name: "status", arguments: {} });
-    const [first] = result.content as Array<{ type: string; text: string }>;
-    const status = JSON.parse(first!.text) as { source: string; jobs: number; app: string };
+    const status = JSON.parse(text(await client.callTool({ name: "status", arguments: {} }))) as { source: string; app: string };
     expect(["harness", "demo"]).toContain(status.source);
     expect(status.app).toMatch(/^http:\/\/localhost:\d+$/);
   });
 
-  it("rejects a rank call with no resume instead of guessing", async () => {
-    const result = await client.callTool({ name: "rank", arguments: {} });
-    expect(result.isError).toBe(true);
+  it("rejects calls that are missing what they need instead of guessing", async () => {
+    expect((await client.callTool({ name: "rank", arguments: {} })).isError).toBe(true);
+    expect((await client.callTool({ name: "start_search", arguments: {} })).isError).toBe(true);
+    expect((await client.callTool({ name: "add_search_results", arguments: { result: "no search started yet" } })).isError).toBe(true);
   });
 
-  it("offers query and structured search inputs and rejects a missing request without searching", async () => {
-    const { tools } = await client.listTools();
-    const search = tools.find((tool) => tool.name === "find_jobs")!;
-    expect(search.inputSchema.properties).toHaveProperty("query");
-    expect(search.inputSchema.properties).toHaveProperty("days");
-    expect(search.inputSchema.properties).toHaveProperty("location_mode");
-    const result = await client.callTool({ name: "find_jobs", arguments: {} });
-    expect(result.isError).toBe(true);
+  it("plans a search from plain words and says exactly what to search on Indeed next", async () => {
+    const brief = JSON.parse(text(await client.callTool({ name: "start_search", arguments: { request: "junior software engineer in Chicago, last 7 days" } }))) as {
+      level: string; postedWithinDays: number; areas: Array<{ query: string }>; next: string; target: number;
+    };
+    expect(brief).toMatchObject({ level: "entry", postedWithinDays: 7, target: 50 });
+    expect(brief.areas[0]!.query).toBe("Chicago, IL");
+    expect(brief.next).toContain("search_jobs");
   });
 
-  it("exposes a reusable JevJob request prompt", async () => {
+  it("exposes a reusable /jevjob prompt, including 'more'", async () => {
     const { prompts } = await client.listPrompts();
-    expect(prompts.map((prompt) => prompt.name)).toContain("jevjob");
-    const result = await client.getPrompt({ name: "jevjob", arguments: { query: "junior software engineer in Chicago, last 7 days" } });
-    expect(result.messages[0]?.content).toMatchObject({ type: "text", text: expect.stringContaining("find_jobs") });
+    expect(prompts.map((p) => p.name)).toContain("jevjob");
+    const search = await client.getPrompt({ name: "jevjob", arguments: { request: "junior software engineer in Chicago" } });
+    expect(search.messages[0]?.content).toMatchObject({ type: "text", text: expect.stringContaining("start_search") });
+    const more = await client.getPrompt({ name: "jevjob", arguments: { request: "more" } });
+    expect(more.messages[0]?.content).toMatchObject({ type: "text", text: expect.stringContaining("more_jobs") });
   });
 });

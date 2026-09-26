@@ -1,24 +1,18 @@
-// The same operations as the MCP server, for shells and harnesses without MCP.
-// Without a chat model to write the search plan, `find` builds one from keywords (planFromQuery).
+// JevJob from a terminal. Indeed search runs through the chat app's Indeed plugin (see mcp.ts), which a terminal
+// can't reach, so `find` here searches the companies Joboid tracks. Everything else matches the MCP server.
 // Run: npm run jevjob -- <command>
 import { readFileSync } from "node:fs";
 import {
-  clearJobs, currentJobs, exaAvailable, findJobs, jevAvailable, loadJobs, moreJobs, openApp, planFromQuery, POSTED_WINDOWS, rankResume,
-  type Engine, type PostedWindow,
+  clearJobs, currentJobs, findTrackedJobs, jevAvailable, loadJobs, moreTrackedJobs, openApp, planFromQuery, POSTED_WINDOWS,
+  rankResume, searchStatus, type Engine, type PostedWindow,
 } from "./index";
 
 const HELP = `jevjob <command>
 
-  find "<request>" [--location L] [--remote] [--days N] [--count N] [--keep]
-                          search public job listings via Exa (search is an alias for find)
-  "<request>"             shorthand, e.g. "junior software engineer in Chicago, last 7 days"
-                          --title T is an alternative to the request string
-                          --strict-location stops geographic widening
-                          --max-queries 1..6 controls Exa request budget (default 5)
-                          --posted 24h|7d|30d|3month is an alternative to --days
-                          --provider joboid explicitly uses saved companies instead
-                          --sources recommended|employers|any (default recommended)
-  more                    same search, only postings you haven't seen yet
+  find "<request>"        search the companies Joboid tracks, e.g. "junior software engineer in Chicago, last 7 days"
+                          [--location L] [--remote] [--posted 24h|7d|30d|3month] [--count N] [--keep] [--strict-location]
+                          (Indeed search runs from Claude or Codex: /jevjob <request>)
+  more                    same tracked-company search, only postings you haven't seen yet
   load <file.json|->      load postings you found yourself [--keep]
   open                    start the app and open it in your browser
   rank <resume.md>        rank the pool in the terminal [--engine jev|rules] [--top N] [--json]
@@ -31,7 +25,7 @@ const option = (name: string) => {
   const i = args.indexOf(`--${name}`);
   return i >= 0 ? args[i + 1] : undefined;
 };
-const VALUE_FLAGS = new Set(["title", "location", "posted", "days", "count", "limit", "engine", "top", "provider", "max-queries", "sources"]);
+const VALUE_FLAGS = new Set(["location", "posted", "count", "limit", "engine", "top"]);
 const BOOLEAN_FLAGS = new Set(["remote", "keep", "no-widen", "strict-location", "json", "help"]);
 const positional: string[] = [];
 function parseArgs() {
@@ -49,37 +43,31 @@ const print = (value: unknown) => console.log(JSON.stringify(value, null, 2));
 
 async function main() {
   parseArgs();
-  if (flag("help") || !args.length) { console.log(HELP); return; }
-  const known = new Set(["find", "search", "joboid", "more", "load", "open", "rank", "status", "clear"]);
+  if (flag("help") || !args.length) return console.log(HELP);
+  const known = new Set(["find", "search", "more", "load", "open", "rank", "status", "clear"]);
   const command = known.has(positional[0] ?? "") ? positional[0] : "find";
-  const targets = known.has(positional[0] ?? "") ? positional.slice(1) : positional;
-  const target = targets.join(" ");
+  const target = (known.has(positional[0] ?? "") ? positional.slice(1) : positional).join(" ");
+
   switch (command) {
     case "find":
-    case "search":
-    case "joboid": {
-      if (!target && !option("title")) throw new Error('Usage: jevjob find "<request>" or jevjob find --title "<title>"');
+    case "search": {
+      if (!target) throw new Error('Usage: jevjob find "<request>"');
       const posted = option("posted");
       if (posted && !Object.hasOwn(POSTED_WINDOWS, posted)) throw new Error(`--posted must be one of: ${Object.keys(POSTED_WINDOWS).join(", ")}`);
-      const provider = option("provider") ?? (command === "joboid" ? "joboid" : "exa");
-      if (provider !== "exa" && provider !== "joboid") throw new Error("--provider must be exa or joboid.");
-      const sources = option("sources") ?? "recommended";
-      if (sources !== "recommended" && sources !== "employers" && sources !== "any") throw new Error("--sources must be recommended, employers, or any.");
-      const plan = planFromQuery(option("title") ?? target, {
+      const count = option("count") ?? option("limit");
+      const plan = planFromQuery(target, {
         location: option("location"),
         remote: flag("remote") ? true : undefined,
         posted: posted as PostedWindow | undefined,
-        days: option("days") !== undefined ? Number(option("days")) : undefined,
-        count: (option("count") ?? option("limit")) !== undefined ? Number(option("count") ?? option("limit")) : undefined,
+        count: count !== undefined ? Number(count) : undefined,
         locationMode: flag("strict-location") || flag("no-widen") ? "strict" : "expand",
       });
-      plan.sources = sources;
-      const result = await findJobs(plan, { keep: flag("keep"), provider, maxQueries: Number(option("max-queries") ?? 5), widen: !flag("no-widen") });
+      const result = await findTrackedJobs(plan, { keep: flag("keep"), widen: !flag("no-widen") });
       print({ plan: { ...plan, locations: plan.locations.length > 6 ? [...plan.locations.slice(0, 6), "…"] : plan.locations }, ...result });
       break;
     }
     case "more":
-      print(await moreJobs({ maxQueries: Number(option("max-queries") ?? 5) }));
+      print(await moreTrackedJobs());
       break;
     case "load": {
       if (!target) throw new Error("Usage: jevjob load <file.json|->");
@@ -105,7 +93,7 @@ async function main() {
     }
     case "status": {
       const { source, jobs } = currentJobs();
-      print({ source, jobs: jobs.length, jev: jevAvailable(), exa: exaAvailable(), defaultSearchProvider: "exa" });
+      print({ source, jobs: jobs.length, jev: jevAvailable(), search: searchStatus() });
       break;
     }
     case "clear":

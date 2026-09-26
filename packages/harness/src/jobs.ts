@@ -2,7 +2,7 @@
 import { existsSync, mkdirSync, readFileSync, rmSync, statSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { dropStale, normalizeJobs, type IngestResult, type RawJob } from "@jevjob/core";
-import { fromRoot, JOBS_FILE, SESSION_FILE } from "./paths";
+import { fromRoot, JOBS_FILE, SEARCH_FILE, SESSION_FILE } from "./paths";
 
 export type JobSource = "harness" | "demo";
 
@@ -62,4 +62,5 @@ export function loadJobs(input: unknown, { replace = false, maxAgeDays }: LoadOp
 export function clearJobs(): void {
   rmSync(JOBS_FILE, { force: true });
   rmSync(SESSION_FILE, { force: true });
+  rmSync(SEARCH_FILE, { force: true });
 }

@@ -14,6 +14,7 @@ const JevJobShape = z.object({
   applyUrl: httpUrl,
   postingUrl: httpUrl.optional(),
   postedAt: z.string().optional(),
+  pay: z.string().max(120).optional(),
   description: z.string(),
 });
 
@@ -57,8 +58,8 @@ export function normalizeJobs(input: unknown): IngestResult {
 function toRawJob(item: unknown): RawJob | string {
   const ours = JevJobShape.safeParse(item);
   if (ours.success) {
-    const { postedAt, postingUrl, ...rest } = ours.data;
-    return { ...rest, ...(postingUrl && { postingUrl }), ...(postedAt && { postedAt }) };
+    const { postedAt, postingUrl, pay, ...rest } = ours.data;
+    return { ...rest, ...(postingUrl && { postingUrl }), ...(postedAt && { postedAt }), ...(pay && { pay }) };
   }
   const joboid = JoboidShape.safeParse(item);
   if (joboid.success) {

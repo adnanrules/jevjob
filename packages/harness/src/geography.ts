@@ -1,67 +1,86 @@
-import { locationFit, METROS, STATES, type SearchPlan } from "./intent";
+// Where to look, in order, and which postings each place accepts.
+//   The requested city → nearby cities → the rest of the state → remote (anywhere in the US).
+// Outside the home state only remote postings count, and in-state postings always come first.
+
+import { METROS, STATES, type SearchPlan } from "./intent";
 
 export interface SearchArea {
+  /** Shown to the user and passed back with results. */
   label: string;
-  locations: string[];
-  remote: boolean;
-  usRemoteOnly?: boolean;
+  /** What to type into a job board's location box: "Chicago, IL", "Illinois", "remote". */
+  query: string;
+  /** Out-of-state areas: only remote postings are accepted. */
+  remoteOnly: boolean;
 }
 
-// Explicit geography, never a company allowlist. Unknown cities remain strict rather than guessing a state.
+/** Cities that anchor each metro's nearby-city stage: spread out, so each board search covers new ground. */
+const NEARBY: Record<string, string[]> = {
+  chicago: ["Naperville", "Schaumburg", "Evanston", "Oak Brook", "Deerfield", "Joliet"],
+  "new york": ["Jersey City", "Newark", "Stamford", "White Plains"],
+  "san francisco": ["San Jose", "Oakland", "Palo Alto", "Mountain View"],
+  seattle: ["Bellevue", "Redmond", "Tacoma"],
+  boston: ["Cambridge", "Waltham", "Burlington"],
+  austin: ["Round Rock", "San Marcos", "Georgetown"],
+};
+
 const CITY_STATES: Record<string, string> = {
-  chicago: "illinois", evanston: "illinois", skokie: "illinois", naperville: "illinois", schaumburg: "illinois",
-  "new york": "new york", boston: "massachusetts", seattle: "washington", austin: "texas", dallas: "texas",
-  houston: "texas", "san francisco": "california", "los angeles": "california", denver: "colorado", atlanta: "georgia",
-  miami: "florida", detroit: "michigan", minneapolis: "minnesota", phoenix: "arizona", philadelphia: "pennsylvania",
+  chicago: "illinois", evanston: "illinois", naperville: "illinois", schaumburg: "illinois", "new york": "new york",
+  boston: "massachusetts", seattle: "washington", austin: "texas", dallas: "texas", houston: "texas",
+  "san francisco": "california", "los angeles": "california", "san jose": "california", denver: "colorado",
+  atlanta: "georgia", miami: "florida", detroit: "michigan", minneapolis: "minnesota", phoenix: "arizona",
+  philadelphia: "pennsylvania", columbus: "ohio", indianapolis: "indiana", milwaukee: "wisconsin", "st. louis": "missouri",
 };
-const NEIGHBORS: Record<string, string[]> = {
-  illinois: ["wisconsin", "indiana", "iowa", "missouri", "kentucky"],
-  wisconsin: ["illinois", "iowa", "minnesota", "michigan"],
-  indiana: ["illinois", "michigan", "ohio", "kentucky"],
-  iowa: ["illinois", "wisconsin", "minnesota", "south dakota", "nebraska", "missouri"],
-  missouri: ["illinois", "iowa", "nebraska", "kansas", "oklahoma", "arkansas", "tennessee", "kentucky"],
-  kentucky: ["illinois", "indiana", "ohio", "west virginia", "virginia", "tennessee", "missouri"],
-  "new york": ["new jersey", "pennsylvania", "connecticut", "massachusetts", "vermont"],
-  massachusetts: ["new york", "vermont", "new hampshire", "connecticut", "rhode island"],
-  washington: ["oregon", "idaho"], texas: ["new mexico", "oklahoma", "arkansas", "louisiana"],
-  california: ["oregon", "nevada", "arizona"], colorado: ["wyoming", "nebraska", "kansas", "oklahoma", "new mexico", "arizona", "utah"],
-  georgia: ["florida", "alabama", "tennessee", "north carolina", "south carolina"],
-  florida: ["georgia", "alabama"], michigan: ["wisconsin", "indiana", "ohio"],
-  minnesota: ["wisconsin", "iowa", "south dakota", "north dakota"],
-  arizona: ["california", "nevada", "utah", "colorado", "new mexico"],
-  pennsylvania: ["new york", "new jersey", "delaware", "maryland", "west virginia", "ohio"],
-};
-const pretty = (s: string) => s.replace(/\b\w/g, (x) => x.toUpperCase());
+
+const title = (s: string) => s.replace(/\b\w/g, (x) => x.toUpperCase());
+
+/** The home state implied by the plan's first location, or null when the plan has no place (or a remote-only plan). */
+export function homeState(plan: Pick<SearchPlan, "locations">): string | null {
+  const first = plan.locations[0]?.toLowerCase().trim();
+  if (!first) return null;
+  const [city = "", region = ""] = first.split(",").map((s) => s.trim());
+  const fromRegion = Object.entries(STATES).find(([name, abbr]) => region === name || region === abbr)?.[0];
+  return fromRegion ?? CITY_STATES[city] ?? (STATES[city] ? city : null);
+}
 
 export function searchAreas(plan: SearchPlan): SearchArea[] {
-  const requested: SearchArea = { label: plan.locations.join(", ") || (plan.remote ? "Remote" : "Anywhere"), locations: plan.locations, remote: plan.remote };
-  if (plan.locationMode === "strict" || plan.locations.length === 0) return [requested];
-  const first = plan.locations[0]!.toLowerCase().trim().replace(/^greater\s+|\s+(?:metro|metropolitan|area)(?:\s+area)?$/g, "");
-  const [city = "", region = ""] = first.split(",").map((s) => s.trim());
-  const stateFromRegion = Object.entries(STATES).find(([name, abbr]) => region === name || region === abbr)?.[0];
-  const state = stateFromRegion ?? CITY_STATES[city] ?? (STATES[city] ? city : undefined);
-  if (!state) return [requested];
-  const knownMetro = METROS[city];
-  if (plan.locations.length > 1 && plan.locations.some((p) => !knownMetro?.includes(p.toLowerCase()))) return [requested];
+  const state = homeState(plan);
+  const first = plan.locations[0]?.split(",")[0]?.trim().toLowerCase();
+  if (!first) return [{ label: plan.remote ? "Remote" : "Anywhere", query: plan.remote ? "remote" : "United States", remoteOnly: plan.remote }];
+  const abbr = state ? STATES[state]!.toUpperCase() : "";
+  const at = (city: string) => (abbr ? `${title(city)}, ${abbr}` : title(city));
   const areas: SearchArea[] = [];
-  if (city !== state) {
-    areas.push({ label: pretty(city), locations: [city], remote: plan.remote });
-    const metro = METROS[city];
-    if (metro || plan.locations.length > 1) areas.push({ label: `${pretty(city)} area`, locations: [...new Set([...(metro ?? []), ...plan.locations])], remote: plan.remote });
+  if (first !== state) areas.push({ label: title(first), query: at(first), remoteOnly: false });
+  if (plan.locationMode !== "strict") {
+    for (const city of NEARBY[first] ?? []) areas.push({ label: `Near ${title(first)}: ${city}`, query: at(city), remoteOnly: false });
+    if (state) areas.push({ label: title(state), query: title(state), remoteOnly: false });
+    areas.push({ label: "Remote (US)", query: "remote", remoteOnly: true });
+  } else if (plan.remote) {
+    areas.push({ label: "Remote (US)", query: "remote", remoteOnly: true });
   }
-  areas.push({ label: pretty(state), locations: [state], remote: false });
-  if (NEIGHBORS[state]) areas.push({ label: `States surrounding ${pretty(state)}`, locations: NEIGHBORS[state]!, remote: false });
-  areas.push({ label: "United States (remote only)", locations: [], remote: true, usRemoteOnly: true });
   return areas;
 }
 
-export function areaFit(location: string, area: SearchArea): boolean {
-  if (area.usRemoteOnly) {
-    return /\b(?:remote|work from home|telecommute)\b/i.test(location)
-      && /\b(?:united states(?: of america)?|u\.?s\.?a?\.?|worldwide|global)\b/i.test(location)
-      && !/\b(?:hybrid|on[- ]?site|not remote|except (?:the )?u\.?s|excluding (?:the )?united states)\b/i.test(location);
-  }
-  // Do not pass an onsite job nationwide merely because it appeared in a remote search.
-  if (!area.locations.length && !area.remote) return true;
-  return locationFit(location, area) === "match";
+export type Placement = "home" | "remote" | "unknown" | "no";
+
+const REMOTE = /\b(remote|work from home|telecommute|anywhere)\b/i;
+const NOT_REMOTE = /\b(hybrid|on[- ]?site|in[- ]office)\b/i;
+const FOREIGN = /\b(canada|united kingdom|uk|india|mexico|germany|philippines|poland|brazil|ireland|australia)\b/i;
+
+/**
+ * Where a posting sits relative to the plan: in the home state or metro ("home"), acceptable only because it's
+ * remote ("remote"), not stated ("unknown"), or out of bounds ("no"). Onsite jobs in other states are never accepted.
+ */
+export function placement(jobLocation: string | null | undefined, plan: SearchPlan): Placement {
+  const text = (jobLocation ?? "").trim();
+  const lower = text.toLowerCase();
+  if (!text || /^\d+\s+locations?$/i.test(text)) return "unknown";
+  const remote = REMOTE.test(text) && !NOT_REMOTE.test(text) && !FOREIGN.test(text);
+  if (!plan.locations.length) return plan.remote ? (remote ? "remote" : "no") : "home";
+
+  const state = homeState(plan);
+  const metro = new Set([...plan.locations.map((l) => l.toLowerCase().split(",")[0]!.trim()), ...(METROS[plan.locations[0]!.toLowerCase().split(",")[0]!.trim()] ?? [])]);
+  const inMetro = [...metro].some((city) => city && lower.includes(city));
+  const inState = state ? lower.includes(state) || new RegExp(`(^|,|\\s)${STATES[state]}(\\b|$)`, "i").test(text) : false;
+  if (inMetro || inState) return "home";
+  return remote && (plan.remote || plan.locationMode !== "strict") ? "remote" : "no";
 }

@@ -29,10 +29,14 @@ export const ROOT = findRoot();
 // Runtime reads of the user's files, not bundle dependencies: tell Turbopack not to trace them.
 export const fromRoot = (...parts: string[]) => path.join(/*turbopackIgnore: true*/ ROOT, ...parts);
 
+/** Local state. JEVJOB_DATA_DIR lets tests use a scratch folder instead of the real pool. */
+const DATA_DIR = process.env.JEVJOB_DATA_DIR ?? fromRoot(".jevjob");
 /** Where a harness's postings live. Deleting it puts the app back on the fictional demo pool. */
-export const JOBS_FILE = fromRoot(".jevjob", "jobs.json");
-/** The searches behind the current pool, and every posting already shown (for "more"). */
-export const SESSION_FILE = fromRoot(".jevjob", "session.json");
+export const JOBS_FILE = path.join(DATA_DIR, "jobs.json");
+/** The tracked-company (Joboid) searches behind the current pool, for "more". */
+export const SESSION_FILE = path.join(DATA_DIR, "session.json");
+/** The harness-driven (Indeed / web) search behind the current pool. */
+export const SEARCH_FILE = path.join(DATA_DIR, "search.json");
 export const JEV_CACHE_DIR = fromRoot(".jevjob", "cache", "jev");
 
 /** Joboid's folder: JOBOID_DIR, or the Joboid repo this project lives inside (projects/jevjob → ../..). */

@@ -10,7 +10,7 @@ import { findDegrees, findEligibility, findMinYears } from "./patterns";
 // that happens to contain "required" can't open a requirements section.
 const REQUIRED_HEADER =
   /\b(requirements|qualifications|required|what you('ll)? need|you have|must[- ]haves?|skills|who you are)\b/i;
-const PREFERRED_HEADER = /\b(nice[- ]to[- ]haves?|preferred|bonus|desired|pluses|a plus)\b/i;
+const PREFERRED_HEADER = /\b(nice[- ]to[- ]haves?|preferred|bonus|desired|pluses|a plus|may have|top candidates|ideal(ly)?|stand out)\b/i;
 const MAX_HEADER_LENGTH = 90;
 // "-", "*" and "–" need a space after them ("**Bold**" isn't a bullet); "●Line" often has none.
 const BULLET = /^(?:[-*–]\s+|[•●▪◦‣]\s*)/;
