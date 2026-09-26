@@ -1,7 +1,7 @@
 // Server-only helpers. Job pool and assessor selection live in @jevjob/harness, shared with the CLI and MCP server.
 import { readFileSync } from "node:fs";
 import path from "node:path";
-import { currentJobs, getAssessor, jevAvailable, ROOT } from "@jevjob/harness";
+import { currentJobs, getAssessor, jevAvailable, ROOT } from "@jevjob/harness/pool";
 
 export { currentJobs as loadJobs, getAssessor, jevAvailable };
 export type AssessorName = "rules" | "jev";
@@ -26,7 +26,7 @@ export function loadSamples(): Sample[] {
     ["devon", "packages/eval/dataset/heldout/resumes/devon-park.md", "Senior data eng"],
   ];
   return files.map(([key, file, headline]) => {
-    const text = readFileSync(path.join(ROOT, file), "utf8");
+    const text = readFileSync(path.join(/*turbopackIgnore: true*/ ROOT, file), "utf8");
     const name = /^#\s+(.+)$/m.exec(text)?.[1]?.trim() ?? key;
     return { key, name, headline, text };
   });

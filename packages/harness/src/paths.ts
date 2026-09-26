@@ -26,7 +26,8 @@ function findRoot(): string {
 }
 
 export const ROOT = findRoot();
-export const fromRoot = (...parts: string[]) => path.join(ROOT, ...parts);
+// Runtime reads of the user's files, not bundle dependencies: tell Turbopack not to trace them.
+export const fromRoot = (...parts: string[]) => path.join(/*turbopackIgnore: true*/ ROOT, ...parts);
 
 /** Where a harness's postings live. Deleting it puts the app back on the fictional demo pool. */
 export const JOBS_FILE = fromRoot(".jevjob", "jobs.json");

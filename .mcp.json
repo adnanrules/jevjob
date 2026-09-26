@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "jevjob": {
+      "command": "node",
+      "args": ["node_modules/tsx/dist/cli.mjs", "packages/harness/src/mcp.ts"]
+    }
+  }
+}

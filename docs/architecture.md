@@ -32,43 +32,33 @@ The harness LLM (Claude, Codex, …) only *finds* jobs, which is cheap for it. J
 bounded classifications (jobs × requirements), and deterministic code does the rest. That split is the cost
 argument: the expensive general model stops doing repetitive grading work.
 
-## Layout (grows by milestone)
+## Layout
 
 ```
 jevjob/
 ├── fixtures/                 # fictional resume + postings + hand labels (inputs and answers kept apart)
 ├── packages/
-│   ├── core/                 # M1: pure domain, no I/O. Types, extraction, rule assessor, policy, pipeline
-│   ├── jev/                  # M3: Jev client behind the same Assessor interface as the rules
-│   └── eval/                 # M2: dataset + metrics runner → writes real results files
+│   ├── core/                 # pure domain, no I/O: types, extraction, rules assessor, policy, ingestion
+│   ├── jev/                  # Jev assessor behind the same Assessor interface as the rules
+│   ├── eval/                 # dev + held-out datasets, metrics, reports, policy sweep
+│   └── harness/              # job pool, Joboid import, CLI and MCP server
 ├── apps/
-│   ├── web/                  # M4: Next.js UI, animation, slider
-│   └── mcp/                  # M5: MCP server + CLI so any harness can call rank_jobs
-└── docs/
+│   └── web/                  # Next.js UI: streamed pipeline, ranked board, detail view, slider
+└── docs/                     # architecture, eval lab notebook, harness setup
 ```
 
 ## Milestones
 
-1. **Deterministic core** (now). Domain types, fixtures, rule-based extraction + assessment + policy, tests.
-2. **Evaluation.** ~30–50 labeled resume/job pairs. Metrics: tier accuracy, blocker recall, false-skip rate,
-   false-apply rate, latency, API calls per job. Baseline numbers for the rules.
-3. **Jev.** Client + Zod-validated outputs, caching, retries. Replace one decision at a time and re-run the eval.
-4. **Web UI.** Resume input, pipeline animation, ranked list with colored rank numbers, requirement
-   lines colored green/yellow/red, detail view, aggressiveness slider.
-5. **Harness integration.** MCP server (`rank_jobs`, `open_board`) for Claude Desktop/Code, Codex and oh-my-pi;
-   a CLI fallback for harnesses without MCP; Joboid as a job provider.
-6. **Ship.** README with demo GIF + real eval table, GitHub Actions CI, fixture-mode deploy.
-
-## Current task
-
-- [x] M1 · Domain types (`packages/core/src/domain.ts`)
-- [x] M1 · Rule-based extraction: posting text → `Requirement[]`, resume text → `Resume`
-- [x] M1 · Rule-based assessor: `Resume` + `Requirement` → `Assessment` (`npm run demo` prints it)
-- [x] M1 · Policy: `AssessedJob` + aggressiveness → `RankedJob`, checked against `fixtures/expected.json`
-- [x] M2 · Eval: 40 labeled resume/job pairs, a metrics runner, real baseline numbers for the rules
-  (`packages/eval/results/rules.md`)
-- [x] M3 · Jev assessor built and unit-tested with a fake client (`packages/jev`)
-- [ ] M3 · First real `npm run eval -- jev` run (needs `TYPESAFE_API_KEY`), then compare against `rules`
+- [x] **M1 · Deterministic core.** Domain types, fixtures, rules extraction + assessment + policy, tests.
+- [x] **M2 · Evaluation.** 40 dev + 18 held-out labeled pairs; tier accuracy, within-one, false-skip,
+  false-apply, blocker recall/precision, requirement checks, latency, calls and tokens per job.
+- [x] **M3 · Jev.** Typed questions, Zod-validated answers, confidence routing, response cache, per-role
+  experience judgments. Compared against rules in [eval-log.md](eval-log.md).
+- [x] **M4 · Web UI.** Streamed pipeline animation, verdict barcodes, colored ranks, live slider re-rank,
+  resume-vs-posting detail view.
+- [x] **M5 · Harness.** MCP server + CLI (load postings, live Joboid import, open app, headless rank);
+  see [harness.md](harness.md).
+- [ ] **M6 · Ship.** Demo video/GIF, push to GitHub, CI green, a fresh held-out set for a clean post-fix number.
 
 ## How Jev is used (and why)
 
