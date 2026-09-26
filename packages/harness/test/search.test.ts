@@ -52,6 +52,8 @@ describe("geography: widen from the city, but other states only if remote", () =
     expect(placement("Remote - United States", chicago)).toBe("remote");
     expect(placement("Hybrid remote in Austin, TX", chicago)).toBe("no");
     expect(placement("Remote - India", chicago)).toBe("no");
+    expect(placement("Argentina Remote", chicago)).toBe("no");
+    expect(placement("Remote - EMEA", chicago)).toBe("no");
   });
 
   it("stays put when asked to", () => {

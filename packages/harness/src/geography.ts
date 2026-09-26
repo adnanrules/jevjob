@@ -64,7 +64,8 @@ export type Placement = "home" | "remote" | "unknown" | "no";
 
 const REMOTE = /\b(remote|work from home|telecommute|anywhere)\b/i;
 const NOT_REMOTE = /\b(hybrid|on[- ]?site|in[- ]office)\b/i;
-const FOREIGN = /\b(canada|united kingdom|uk|india|mexico|germany|philippines|poland|brazil|ireland|australia)\b/i;
+/** Remote postings tied to another country or region ("Argentina Remote", "Remote - EMEA") aren't US-remote. */
+const FOREIGN = /\b(canada|united kingdom|uk|england|india|mexico|germany|philippines|poland|brazil|ireland|australia|argentina|colombia|chile|peru|uruguay|costa rica|spain|portugal|france|netherlands|italy|sweden|romania|ukraine|israel|pakistan|nigeria|kenya|south africa|japan|singapore|china|vietnam|emea|apac|latam|europe)\b/i;
 
 /**
  * Where a posting sits relative to the plan: in the home state or metro ("home"), acceptable only because it's
