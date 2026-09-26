@@ -33,9 +33,19 @@ area returns the same ones. So a short search degrades in a fixed order instead 
 
 1. **Saturation.** An Indeed search that adds fewer than 2 new postings is "dry". Two dry searches in a row skip
    that area; four in a row skip every local area and go straight to remote (a different pool).
-2. **Career sites.** Once Indeed is used up, `search_career_sites` runs Joboid's title search over the employers it
-   tracks (Greenhouse, Workday, …) and puts each posting through the same checks. It reads Joboid's cache
-   (`start_search` refreshes it in the background) and fetches at most 80 postings per call, in-window first.
+2. **Career sites.** Once Indeed is used up, `search_career_sites` does two things, with the same checks as Indeed:
+   - **New-grad feed** (entry-level and any-level searches): the community list
+     [SimplifyJobs/New-Grad-Positions](https://github.com/SimplifyJobs/New-Grad-Positions), about a thousand active
+     new-grad roles a month, each linking to the employer's own posting. JevJob filters it by role family, place and
+     date, then reads each posting through Joboid's `postings` command, which calls the employer's system directly
+     (Workday, Greenhouse, Lever, Ashby, SmartRecruiters, Workable, Oracle Cloud, iCIMS, Rippling, and the Amazon,
+     Microsoft and IBM search APIs). Reading a posting doesn't make Joboid follow that company. The list has no
+     license, so it's downloaded at run time (cached 6 hours) and credited, never committed here.
+   - **Followed companies:** Joboid's title search over the employers it tracks. It reads Joboid's cache
+     (`start_search` refreshes it in the background) and fetches at most 80 postings per call, in-window first.
+
+   To follow more companies, Joboid's `boards propose` lists the ones currently hiring new grads (with example
+   titles), and `boards add <slugs>` follows only the ones you pick. Nothing is followed automatically.
 3. **Widening.** Still short, and the user gave a "posted within" window? Postings that missed only on date were
    held back all along. The window widens one step at a time (7 → 14 → 30 days; never past 4× the request, or 30
    days for short windows) and releases them. Each carries `outsideWindowDays`, shows a dashed "12d · outside 7d"

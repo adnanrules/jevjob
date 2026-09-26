@@ -262,6 +262,28 @@ describe("when the search runs short", () => {
     expect(loaded.next).toContain("used up");
   });
 
+  it("picks new-grad feed rows by role family, place and date, best first", async () => {
+    const { feedCandidates, planCategories } = await import("../src/new-grad-feed");
+    indeed.startSearch(planFromQuery("junior software engineer in Chicago, last 30 days"));
+    const s = (await import("../src/indeed")).readSearch()!;
+    expect([...planCategories(s.plan)]).toContain("Software");
+    const secondsAgo = (days: number) => Math.floor(Date.now() / 1000) - days * 86_400;
+    const row = (company: string, title: string, locations: string[], days: number, extra: object = {}) =>
+      ({ company_name: company, title, url: `https://example.com/${company}`, locations, date_posted: secondsAgo(days), category: "Software", active: true, ...extra });
+    const picked = feedCandidates(s, [
+      row("Remote Co", "Software Engineer I", ["Remote in USA"], 3),
+      row("Chicago Co", "Software Engineer, New Grad", ["Chicago, IL"], 5),
+      row("Worded Co", "Technology Analyst", ["Evanston, IL"], 2), // title differs; the feed's category fits
+      row("Older Co", "Software Developer", ["Naperville, IL"], 45), // a near miss for a 30-day window
+      row("Austin Co", "Software Engineer", ["Austin, TX"], 1), // another state, onsite
+      row("Senior Co", "Senior Software Engineer", ["Chicago, IL"], 1),
+      row("Chip Co", "FPGA Engineer 1", ["Chicago, IL"], 1, { category: "Hardware" }),
+      row("Closed Co", "Software Engineer", ["Chicago, IL"], 1, { active: false }),
+      row("Ancient Co", "Software Engineer", ["Chicago, IL"], 200),
+    ]);
+    expect(picked.map((r) => r.company_name)).toEqual(["Worded Co", "Chicago Co", "Remote Co", "Older Co"]);
+  });
+
   it("fills in the company when job details say None", () => {
     const brief = indeed.startSearch(planFromQuery("software engineer in Chicago"));
     indeed.addSearchResults(listing(60, "Software Engineer", "Named Co", "Chicago, IL"), { title: brief.titles[0]!, location: "Chicago, IL" });

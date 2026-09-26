@@ -8,7 +8,10 @@ those answers into a tier, and every rank is explained line by line.
 <!-- Demo GIF goes here once recorded: docs/demo.gif -->
 
 - **Ask in plain English from Claude or Codex:** `/jevjob junior software engineer in Chicago this week`. Postings
-  come from the **Indeed** plugin by default, or the assistant's own web search when Indeed isn't installed.
+  come from the **Indeed** plugin, employers' own career sites (Workday, Greenhouse, Oracle Cloud, iCIMS, … through
+  Joboid), and for entry-level searches the community new-grad list
+  ([SimplifyJobs/New-Grad-Positions](https://github.com/SimplifyJobs/New-Grad-Positions), read at run time and
+  credited). Without Indeed, the assistant's own web search fills in.
 - **Five tiers**, shown as the rank number's color: 🟢 Apply · 🟡 Maybe · 🟠 Stretch · 🔴 Big stretch · 🟥 No.
 - **Every requirement** shown in green (you meet it), yellow (unclear) or red (you don't), next to the resume line that proves it.
 - **An aggressiveness slider** (Conservative ↔ Apply anyway) re-ranks instantly in the browser with zero model calls.

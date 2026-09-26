@@ -451,7 +451,13 @@ export function load(s: Search, candidates: Candidate[]): number {
   const { jobs } = normalizeJobs(candidates.map(({ home: _home, ...job }) => job));
   const existing = s.started && currentJobs().source === "harness" ? currentJobs().jobs : [];
   const existingKeys = new Set(existing.map(postingKey));
-  const fresh = jobs.filter((j) => !existingKeys.has(postingKey(j)));
+  // Also one per key within the batch: employers often post identical requisitions ("Software Engineer", same city).
+  const fresh = jobs.filter((j) => {
+    const key = postingKey(j);
+    if (existingKeys.has(key)) return false;
+    existingKeys.add(key);
+    return true;
+  });
   if (fresh.length) {
     loadJobs(fresh, { replace: !s.started });
     s.started = true;

@@ -149,7 +149,7 @@ server.registerTool(
   {
     title: "Search company career sites",
     description:
-      "Call when `next` says so (after Indeed is used up). JevJob searches the employer career sites Joboid tracks for the current search, applies the same checks, and loads what fits, with direct employer apply links. Takes a few seconds to a minute.",
+      "Call when `next` says so (after Indeed is used up). For entry-level searches JevJob first reads the community new-grad list (github.com/SimplifyJobs/New-Grad-Positions) and each matching posting from the employer's own system, then searches the career sites Joboid follows. Same checks as Indeed; direct employer apply links. Takes a few seconds to a minute.",
   },
   async () => {
     try {

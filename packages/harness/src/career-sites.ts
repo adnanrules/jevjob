@@ -1,7 +1,9 @@
 // The second source: company career sites, through Joboid. Joboid reads employers' own applicant tracking systems
-// (Greenhouse, Workday, …), so these postings come with direct apply links, and it covers employers the Indeed
-// plugin's small index never returns. No LLM tokens: the MCP server runs Joboid itself.
+// (Greenhouse, Workday, Oracle, iCIMS, …), so these postings come with direct apply links, and it covers employers the
+// Indeed plugin's small index never returns. No LLM tokens: the MCP server runs Joboid itself.
 //
+//   0. Entry-level searches start with the new-grad feed (new-grad-feed.ts): curated new-grad roles at employers
+//      Joboid doesn't follow, read straight from each employer's posting.
 //   1. One Joboid title search over the cached listings (fast; a background refresh keeps the cache current).
 //   2. Rank candidates from the listing alone: not seen before, title and level fit, place, date.
 //   3. Fetch full postings best-first and put each through the same checks as Indeed postings (admit).
@@ -11,6 +13,7 @@ import { placement } from "./geography";
 import { admit, ageOf, jobsSummary, load, nextStep, readSearch, saveSearch, settle, skip, widenSteps, type JobsSummary, type Search } from "./indeed";
 import { levelFit, searchDays, titleFit } from "./intent";
 import { joboid } from "./joboid";
+import { addFromFeed, FEED_CREDIT, type FeedStep } from "./new-grad-feed";
 import { joboidDir } from "./paths";
 import { postingKey } from "./posting";
 import { earlyTitleMismatch } from "./search-quality";
@@ -37,6 +40,8 @@ export interface CareerSitesSummary extends JobsSummary {
   matched: number;
   /** Full postings fetched and checked. */
   examined: number;
+  /** The new-grad feed step (entry-level searches only). */
+  feed: FeedStep & { source: string };
 }
 
 const isoDate = (posted: string | null | undefined) => (/^\d{4}-\d{2}-\d{2}$/.test(posted ?? "") ? posted! : undefined);
@@ -75,8 +80,11 @@ export async function searchCareerSites(): Promise<CareerSitesSummary> {
     s.careerSites = "unavailable";
     settle(s);
     saveSearch(s);
-    return { ...jobsSummary(s, 0), matched: 0, examined: 0 };
+    return { ...jobsSummary(s, 0), matched: 0, examined: 0, feed: { matched: 0, read: 0, added: 0, source: FEED_CREDIT } };
   }
+
+  const feed = await addFromFeed(s, dir);
+  saveSearch(s);
 
   // With a date window, ask Joboid only for what could ever be admitted (up to the widest step).
   const requested = searchDays(s.plan);
@@ -88,7 +96,7 @@ export async function searchCareerSites(): Promise<CareerSitesSummary> {
 
   const seen = new Set(s.seen);
   let examined = 0;
-  let addedNow = 0;
+  let addedNow = feed.added;
   const want = () => s.target - s.loaded - s.queue.length;
   for (let i = 0; i < queue.length && examined < MAX_FETCHES && want() > 0; i += PARALLEL) {
     const batch = queue.slice(i, i + PARALLEL);
@@ -107,5 +115,5 @@ export async function searchCareerSites(): Promise<CareerSitesSummary> {
   settle(s);
   addedNow += s.loaded - before;
   saveSearch(s);
-  return { ...jobsSummary(s, addedNow), matched: found.jobs?.length ?? 0, examined, next: nextStep(s) };
+  return { ...jobsSummary(s, addedNow), matched: found.jobs?.length ?? 0, examined, feed: { ...feed, source: FEED_CREDIT }, next: nextStep(s) };
 }
