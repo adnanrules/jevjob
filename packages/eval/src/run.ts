@@ -95,15 +95,19 @@ async function main() {
   writeFileSync(new URL(`${assessor.name}.md`, outDir), renderMarkdown(info, splits, results));
   writeFileSync(new URL(`${assessor.name}.json`, outDir), JSON.stringify({ ...info, splits, results }, null, 2) + "\n");
 
-  const t = splits.test;
-  const latency = t.meanLatencyMs === null ? "n/a (all cached)" : `${t.meanLatencyMs.toFixed(2)} ms/job`;
-  console.log(`${assessor.name} on ${t.cases} test cases (${results.filter((r) => r.cached).length} answered from cache)`);
-  console.log(`  tier accuracy      ${formatRate(t.tierAccuracy)}   within one tier ${formatRate(t.withinOneTier)}`);
-  console.log(`  false-skip         ${formatRate(t.falseSkip)}   false-apply ${formatRate(t.falseApply)}`);
-  console.log(`  blocker recall     ${formatRate(t.blockerRecall)}   precision ${formatRate(t.blockerPrecision)}`);
-  console.log(`  requirement checks ${formatRate(t.requirementChecks)}   not extracted ${t.notExtracted}`);
-  console.log(`  latency ${latency}, ${t.callsPerJob.toFixed(1)} calls/job, ${Math.round(t.inputTokensPerJob)} input tokens/job`);
-  console.log(`Full report: packages/eval/results/${assessor.name}.md`);
+  console.log(`${assessor.name}: ${results.length} cases, ${results.filter((r) => r.cached).length} answered from cache`);
+  for (const split of ["test", "dev"] as const) {
+    const t = splits[split];
+    if (!t.cases) continue;
+    const latency = t.meanLatencyMs === null ? "n/a (all cached)" : `${t.meanLatencyMs.toFixed(2)} ms/job`;
+    console.log(`\n${split.toUpperCase()} (n=${t.cases})${split === "dev" ? "  tuned on, optimistic" : ""}`);
+    console.log(`  tier accuracy      ${formatRate(t.tierAccuracy)}   within one tier ${formatRate(t.withinOneTier)}`);
+    console.log(`  false-skip         ${formatRate(t.falseSkip)}   false-apply ${formatRate(t.falseApply)}`);
+    console.log(`  blocker recall     ${formatRate(t.blockerRecall)}   precision ${formatRate(t.blockerPrecision)}`);
+    console.log(`  requirement checks ${formatRate(t.requirementChecks)}   not extracted ${t.notExtracted}`);
+    console.log(`  latency ${latency}, ${t.callsPerJob.toFixed(1)} calls/job, ${Math.round(t.inputTokensPerJob)} input tokens/job`);
+  }
+  console.log(`\nFull report: packages/eval/results/${assessor.name}.md`);
 }
 
 main().catch((err: unknown) => {

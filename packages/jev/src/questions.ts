@@ -41,15 +41,16 @@ export function buildRequest(resume: Resume, job: RawJob, requirements: Requirem
     if (req.kind === "experience") {
       // Jev is "not a calculator": code compares the years; Jev only judges the kind of work.
       const key = `kind_${i}`;
+      // No job title here: in v1 it pulled "is this the kind of work" toward "is this the job's field".
+      // The explicit "names no kind → yes" rule is there because Jev answers literally (docs: model jaggedness).
       questions[key] = noul(
         {
-          task: "Is the candidate's professional experience the kind of work this job line asks for? Judge only the kind of work, not how many years.",
-          job: jobName,
+          task: "Does the resume show professional work of the kind this line names? Ignore how many years.",
           line: req.text,
         },
         {
-          true: "The resume shows professional work of this kind: the same field, role type, or technology the line names.",
-          false: "The resume's professional work is a different kind than the line asks for.",
+          true: "The resume shows professional work of the kind the line names (field, role type, or technology), or the line names no specific kind of work at all (for example just '0-2 years of experience').",
+          false: "The line names a specific kind of work and the resume's professional work is a different kind.",
         },
       );
       plan.experienceKind.set(req.id, key);
