@@ -1,8 +1,7 @@
 // npm run setup: the one-time setup for a fresh clone.
 //   1. Checks Node, creates .env from .env.example, and says whether a Jev key is set (never prints it).
-//   2. Prints the exact MCP config for Claude Code, Claude Desktop and Codex, with this folder's absolute paths.
+//   2. Prints the exact MCP config for Claude Desktop and Codex, with this folder's absolute paths.
 import { copyFileSync, existsSync, readFileSync } from "node:fs";
-import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -42,24 +41,19 @@ const desktopConfig =
   : "~/.config/Claude/claude_desktop_config.json";
 
 console.log(`
-Connect it to your assistant (pick one or more):
-
-  Claude Code
-    In this folder it's already set up (.mcp.json). Start Claude Code here and approve the "jevjob" server.
-    To use it from any folder:
-      claude mcp add --scope user jevjob -- node "${tsx}" "${server}"
-    The /jevjob command: copy .claude/commands/jevjob.md to ${slash(path.join(os.homedir(), ".claude/commands"))}/
+Connect it to your assistant (see the README, step 4):
 
   Claude Desktop
-    Add this under "mcpServers" in ${desktopConfig}, then restart Claude Desktop:
+    Settings → Developer → Edit Config, and add this inside "mcpServers" (${desktopConfig}):
       "jevjob": { "command": "node", "args": ["${tsx}", "${server}"] }
+    Then fully quit Claude Desktop and reopen it.
 
   Codex
     Add this to ~/.codex/config.toml, then restart Codex:
       [mcp_servers.jevjob]
       command = "node"
       args = ["${tsx}", "${server}"]
+      tool_timeout_sec = 300
 
-Then enable the Indeed plugin in the same app (optional; JevJob also reads employers' career sites on its own),
-and ask: /jevjob junior software engineer in Chicago, last 30 days
+Then ask your assistant: "Use JevJob to find junior software engineer jobs in Chicago, last 30 days"
 `);
