@@ -29,8 +29,11 @@ import { earlyTitleMismatch, jobFitIssue } from "./search-quality";
 /** The most postings shown and classified at a time. */
 export const BATCH_SIZE = 50;
 
-/** An Indeed search that adds fewer new postings than this counts as dry. */
-const DRY_BELOW = 2;
+/**
+ * An Indeed search that adds no usable posting (in the window, or a near miss) counts as dry. Counting never-seen
+ * postings wasn't enough: Indeed keeps mixing in new but irrelevant listings (AI-trainer gigs, senior roles), so
+ * no search ever looked dry and every planned search ran.
+ */
 /** Dry searches in a row before an area is skipped. */
 const DRY_AREA = 2;
 /** Dry searches in a row, across areas, before every local area is skipped (remote is a different pool). */
@@ -321,7 +324,8 @@ export function addSearchResults(raw: string, searched?: { title: string; locati
     (age === "held" ? s.nearMisses : s.queue).push({ ...l, home: where === "home" });
   }
   s.seen = [...seen];
-  noteDryness(s, area, fresh);
+  const usable = s.queue.length - before + (s.nearMisses.length - heldBefore);
+  noteDryness(s, area, usable);
   sortQueue(s);
   settle(s);
   saveSearch(s);
@@ -343,8 +347,8 @@ export function addSearchResults(raw: string, searched?: { title: string; locati
 }
 
 /** Indeed's plugin draws from a small index: past a point, every search returns the same postings. Stop asking. */
-function noteDryness(s: Search, area: string, fresh: number): void {
-  if (fresh >= DRY_BELOW) {
+function noteDryness(s: Search, area: string, usable: number): void {
+  if (usable > 0) {
     s.dry[area] = 0;
     s.dryStreak = 0;
     return;

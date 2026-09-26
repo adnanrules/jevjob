@@ -214,6 +214,15 @@ describe("when the search runs short", () => {
     expect(third.next).not.toContain("search_jobs");
   });
 
+  it("counts a search full of new but irrelevant postings as dry", () => {
+    const brief = chicagoOnly();
+    const noise = (n: number) => [listing(n, "Staff Software Engineer - AI Trainer", `Gig Co ${n}`, "Chicago, IL", daysAgo(90)), listing(n + 1, "Senior Software Engineer", `Big Co ${n}`, "Chicago, IL", daysAgo(3))].join("\n\n");
+    indeed.addSearchResults(noise(70), { title: brief.titles[0]!, location: "Chicago, IL" });
+    const second = indeed.addSearchResults(noise(80), { title: brief.titles[1]!, location: "Chicago, IL" });
+    expect(second.new).toBe(2);
+    expect(second.saturated).toEqual(["chicago, il"]);
+  });
+
   it("holds near misses back, then widens the window and tags them", () => {
     const brief = chicagoOnly();
     const results = indeed.addSearchResults(
