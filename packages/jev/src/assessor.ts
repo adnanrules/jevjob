@@ -36,7 +36,7 @@ export function createJevAssessor({ client = new TypeSafeClient(), cache }: JevA
         await cache?.set(cacheKey, response);
       }
 
-      return { assessed: interpret(base, plan, response.answers), calls: 1, inputTokens: response.inputTokens, cached };
+      return { assessed: interpret(base, plan, response.answers, resume), calls: 1, inputTokens: response.inputTokens, cached };
     },
   };
 }

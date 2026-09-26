@@ -20,8 +20,8 @@ export type JevVerdict = keyof typeof VERDICT_CRITERIA;
 export interface Plan {
   /** requirementId → key of its Choice verdict question (skill, education, eligibility, other). */
   verdict: Map<string, string>;
-  /** requirementId → key of the Noul asking whether the candidate's experience is the right KIND. */
-  experienceKind: Map<string, string>;
+  /** requirementId → one Noul key per resume role ("is this role the kind of work the line asks for?"). */
+  experienceRoles: Map<string, string[]>;
   /** Posting line text → key of the Noul asking whether that line requires anything at all. */
   lineRequires: Map<string, string>;
 }
@@ -34,26 +34,27 @@ export interface JevRequest {
 
 export function buildRequest(resume: Resume, job: RawJob, requirements: Requirement[]): JevRequest {
   const questions: Questions = {};
-  const plan: Plan = { verdict: new Map(), experienceKind: new Map(), lineRequires: new Map() };
+  const plan: Plan = { verdict: new Map(), experienceRoles: new Map(), lineRequires: new Map() };
   const jobName = `${job.title} at ${job.company}`;
 
   requirements.forEach((req, i) => {
     if (req.kind === "experience") {
-      // Jev is "not a calculator": code compares the years; Jev only judges the kind of work.
-      const key = `kind_${i}`;
-      // No job title here: in v1 it pulled "is this the kind of work" toward "is this the job's field".
-      // The explicit "names no kind → yes" rule is there because Jev answers literally (docs: model jaggedness).
-      questions[key] = noul(
-        {
-          task: "Does the resume show professional work of the kind this line names? Ignore how many years.",
-          line: req.text,
-        },
-        {
-          true: "The resume shows professional work of the kind the line names (field, role type, or technology), or the line names no specific kind of work at all (for example just '0-2 years of experience').",
-          false: "The line names a specific kind of work and the resume's professional work is a different kind.",
-        },
-      );
-      plan.experienceKind.set(req.id, key);
+      // "Atomic questions, composed in code": Jev judges each role's KIND of work; code adds up the months
+      // of the roles that qualify (Jev is "not a calculator"). No job title in the question: in v1 it pulled
+      // "is this the kind of work" toward "is this the job's field". "Names no kind → yes" is spelled out
+      // because Jev answers literally.
+      const keys = resume.roles.map((role, k) => {
+        const key = `role_${i}_${k}`;
+        questions[key] = noul(
+          { task: "Is this job from the candidate's resume the kind of work this posting line asks for? Ignore how long it lasted.", line: req.text, role: role.text },
+          {
+            true: "The role is the kind of work the line names (field, role type, or technology), or the line names no specific kind of work at all (for example just '0-2 years of experience').",
+            false: "The line names a specific kind of work and this role is a different kind.",
+          },
+        );
+        return key;
+      });
+      plan.experienceRoles.set(req.id, keys);
     } else {
       const key = `req_${i}`;
       questions[key] = choice(

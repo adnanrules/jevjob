@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { extractRequirements } from "../src/extract/requirements";
-import { parseResume } from "../src/extract/resume";
+import { findEligibility } from "../src/extract/patterns";
+import { parseResume, yearsOf } from "../src/extract/resume";
 import { jobAt, label, lakeshoreRequirements, resumeText } from "./helpers";
 
 describe("extractRequirements", () => {
@@ -51,5 +52,19 @@ describe("parseResume", () => {
 
   it("treats unstated eligibility as unknown, not false", () => {
     expect(resume.eligibility).toEqual({});
+  });
+
+  it("parses every dated role with its bullets, and counts overlapping months once", () => {
+    expect(resume.roles.map((r) => r.title)).toEqual(["Software Engineering Intern", "Teaching Assistant"]);
+    expect(resume.roles[0]!.text).toContain("Spring Boot");
+    // Jan 2025 – May 2026 contains Jun – Aug 2025: 17 months total, not 20.
+    expect(yearsOf(resume.roles)).toBe(1.42);
+  });
+});
+
+describe("findEligibility", () => {
+  it("doesn't mistake a driver's license for a professional license", () => {
+    expect(findEligibility("Valid driver's license and ability to travel")).toBeNull();
+    expect(findEligibility("Active nursing license in Illinois")).toBe("professional_license");
   });
 });

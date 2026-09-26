@@ -28,7 +28,8 @@ const ELIGIBILITY_PATTERNS: Array<[EligibilityKind, RegExp]> = [
   ["security_clearance", /\bclearance\b/i],
   ["us_citizenship", /\bcitizen(ship)?\b/i],
   ["work_authorization", /authori[sz](ed|ation) to work|work authori[sz]ation|visa sponsorship/i],
-  ["professional_license", /\blicen[sc](e|ed|ure)\b/i],
+  // A driver's license isn't a professional license (held-out bug: it became a false blocker).
+  ["professional_license", /(?<!driver['’]?s\s|driving\s)\blicen[sc](e|ed|ure)\b/i],
 ];
 
 export function findEligibility(text: string): EligibilityKind | null {

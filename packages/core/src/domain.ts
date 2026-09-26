@@ -29,13 +29,24 @@ export type EligibilityKind =
   | "work_authorization"
   | "professional_license";
 
+/** One dated job from the Experience section. Months are indexes (year * 12 + month) so overlaps can be merged. */
+export interface Role {
+  title: string;
+  /** The role's header line plus its bullets: what a classifier reads to judge the kind of work. */
+  text: string;
+  startMonth: number;
+  endMonth: number;
+}
+
 export interface Resume {
   rawText: string;
   /** Canonical lowercase names ("postgresql", not "Postgres"). */
   skills: string[];
   /** Highest degree completed or expected. */
   degree: DegreeLevel;
-  /** Professional experience in years; a 3-month internship is 0.25. */
+  /** Every dated role, technical or not. Jev judges which ones count for a given requirement. */
+  roles: Role[];
+  /** The rules' estimate: years in roles with a technical-sounding title. A 3-month internship is 0.25. */
   yearsExperience: number;
   /** A missing key means UNKNOWN, never false. Resume silence ≠ "doesn't have it". */
   eligibility: Partial<Record<EligibilityKind, boolean>>;

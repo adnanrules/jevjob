@@ -1,7 +1,9 @@
 // Turns Jev's typed answers into Assessments. Pure, so it's unit-tested with canned answers.
 // Design rule: anything missing, malformed, or low-confidence falls back safely instead of guessing.
 import { z } from "zod";
-import { SILENCE_MEANS_NO, worstVerdict, type AssessedJob, type Assessment, type Verdict } from "@jevjob/core";
+import {
+  BORDERLINE_YEARS, SILENCE_MEANS_NO, yearsOf, type AssessedJob, type Assessment, type Resume, type Verdict,
+} from "@jevjob/core";
 import type { JevVerdict, Plan } from "./questions";
 
 /** Tunable on the eval's dev split. Starting values follow the docs' advice: conservative first. */
@@ -35,7 +37,7 @@ const TO_VERDICT: Record<JevVerdict, Verdict> = {
 /** Noul has no separate confidence; distance from 0.5 is how sure it is (0 = coin flip, 1 = certain). */
 const noulCertainty = (p: number) => Math.abs(p - 0.5) * 2;
 
-export function interpret(base: AssessedJob, plan: Plan, rawAnswers: unknown): AssessedJob {
+export function interpret(base: AssessedJob, plan: Plan, rawAnswers: unknown, resume: Resume): AssessedJob {
   const answers = Answers.parse(rawAnswers);
   const choiceAt = (key: string | undefined) => (key ? ChoiceAnswer.safeParse(answers[key]).data : undefined);
   const noulAt = (key: string | undefined) => (key ? NoulAnswer.safeParse(answers[key]).data?.noul : undefined);
@@ -48,11 +50,23 @@ export function interpret(base: AssessedJob, plan: Plan, rawAnswers: unknown): A
       return { ...rule, verdict: "meets", evidence: "The posting says this isn't required", source: "jev", confidence: noulCertainty(requires) };
     }
 
-    const kind = noulAt(plan.experienceKind.get(req.id));
-    if (kind !== undefined) {
-      const kindVerdict: Verdict = kind >= JEV_POLICY.noulYes ? "meets" : kind <= JEV_POLICY.noulNo ? "does_not_meet" : "unclear";
-      // Code judged the years, Jev judged the kind. Both have to hold.
-      return { ...rule, verdict: worstVerdict([rule.verdict, kindVerdict]), source: "jev", confidence: noulCertainty(kind) };
+    const roleKeys = plan.experienceRoles.get(req.id);
+    if (req.kind === "experience" && roleKeys?.length) {
+      const roleAnswers = roleKeys.map((key) => noulAt(key));
+      if (roleAnswers.every((p) => p !== undefined)) {
+        // Jev said which roles are the right kind; code does the arithmetic.
+        const yes = resume.roles.filter((_, k) => roleAnswers[k]! >= JEV_POLICY.noulYes);
+        const yesOrMaybe = resume.roles.filter((_, k) => roleAnswers[k]! > JEV_POLICY.noulNo);
+        const sure = yearsOf(yes);
+        const possible = yearsOf(yesOrMaybe);
+        const verdict: Verdict =
+          sure >= req.minYears ? "meets"
+          : possible >= req.minYears || req.minYears - sure <= BORDERLINE_YEARS ? "unclear"
+          : "does_not_meet";
+        const evidence = yes.length ? `${sure} years of matching work: ${yes.map((r) => r.title).join(", ")}` : "No matching roles";
+        const confidence = roleAnswers.reduce((s, p) => s + noulCertainty(p!), 0) / roleAnswers.length;
+        return { ...rule, verdict, evidence, source: "jev", confidence };
+      }
     }
 
     const answer = choiceAt(plan.verdict.get(req.id));

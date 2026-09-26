@@ -20,7 +20,7 @@ export const rulesAssessor: Assessor = {
 };
 
 /** How many years short still reads as "borderline" (yellow) instead of "no" (red). */
-const BORDERLINE_YEARS = 1;
+export const BORDERLINE_YEARS = 1;
 
 export function assessRequirement(resume: Resume, req: Requirement): Assessment {
   const [verdict, evidence] = judge(resume, req);

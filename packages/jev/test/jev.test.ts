@@ -17,15 +17,17 @@ const jobAt = (company: string) => jobs.find((j) => j.company === company)!;
 const choice = (label: string, confidence = 0.9) => ({ type: "choice", choice: label, confidence, probabilities: { [label]: confidence } });
 const noul = (p: number) => ({ type: "noul", noul: p });
 
-/** Runs interpret with answers keyed by requirement text instead of question keys. Easier to read in tests. */
+/** Runs interpret with answers chosen per question (by key and the posting line it's about). */
 function verdictsWith(company: string, answerFor: (key: string, text: string) => unknown): Record<string, Verdict> {
   const base = assessJob(resume, jobAt(company));
   const { questions, plan } = buildRequest(resume, jobAt(company), base.requirements);
   const textOf = new Map<string, string>();
-  for (const [id, key] of [...plan.verdict, ...plan.experienceKind]) textOf.set(key, base.requirements.find((r) => r.id === id)!.text);
+  const reqText = (id: string) => base.requirements.find((r) => r.id === id)!.text;
+  for (const [id, key] of plan.verdict) textOf.set(key, reqText(id));
+  for (const [id, keys] of plan.experienceRoles) for (const key of keys) textOf.set(key, reqText(id));
   for (const [text, key] of plan.lineRequires) textOf.set(key, text);
   const answers = Object.fromEntries(Object.keys(questions).map((key) => [key, answerFor(key, textOf.get(key)!)]));
-  const result = interpret(base, plan, answers);
+  const result = interpret(base, plan, answers, resume);
   return Object.fromEntries(result.requirements.map((r, i) => [`${r.text}#${i}`, result.assessments[i]!.verdict]));
 }
 const find = (verdicts: Record<string, Verdict>, text: string) =>
@@ -36,14 +38,16 @@ describe("buildRequest", () => {
   const base = assessJob(resume, job);
   const { state, questions, plan } = buildRequest(resume, job, base.requirements);
 
-  it("sends the resume once as state and asks one question per requirement", () => {
+  it("sends the resume once as state and covers every requirement", () => {
     expect(state).toEqual({ resume: resume.rawText });
-    expect(plan.verdict.size + plan.experienceKind.size).toBe(base.requirements.length);
+    expect(plan.verdict.size + plan.experienceRoles.size).toBe(base.requirements.length);
   });
 
-  it("asks about the KIND of experience with a Noul and leaves the years to code", () => {
+  it("asks one yes/no per resume role for an experience line, and leaves the years to code", () => {
     const expId = base.requirements.find((r) => r.kind === "experience")!.id;
-    expect(questions[plan.experienceKind.get(expId)!]!.type).toBe("noul");
+    const keys = plan.experienceRoles.get(expId)!;
+    expect(keys).toHaveLength(resume.roles.length);
+    for (const key of keys) expect(questions[key]!.type).toBe("noul");
   });
 
   it("asks the 'does this line require anything?' question once per required line, never for preferred ones", () => {
@@ -56,7 +60,7 @@ describe("buildRequest", () => {
 describe("interpret", () => {
   it("fixes the negation trap: 'A degree is not required' becomes met", () => {
     const v = verdictsWith("Harbor Point Health", (key, text) =>
-      key.startsWith("line_") ? noul(text.includes("not required") ? 0.05 : 0.95) : key.startsWith("kind_") ? noul(0.9) : choice("meets"));
+      key.startsWith("line_") ? noul(text.includes("not required") ? 0.05 : 0.95) : key.startsWith("role_") ? noul(0.9) : choice("meets"));
     expect(find(v, "degree is not required")).toEqual(["meets"]);
   });
 
@@ -65,10 +69,14 @@ describe("interpret", () => {
     expect(find(v, "AWS")).toEqual(["unclear"]);
   });
 
-  it("requires both: code's years AND Jev's kind of experience", () => {
-    // Right kind of work, but code already knows 0.25 years is far short of 2+.
-    const v = verdictsWith("Northbrook Robotics", (key) => (key.startsWith("kind_") ? noul(0.95) : key.startsWith("line_") ? noul(0.95) : choice("meets")));
-    expect(find(v, "2+ years")).toContain("does_not_meet");
+  it("adds up only the months of roles Jev says are the right kind", () => {
+    // Jordan: a 3-month internship inside a 17-month TA job. "2+ years of backend development":
+    const internshipOnly = verdictsWith("Northbrook Robotics", (key) =>
+      key.startsWith("role_") ? noul(key.endsWith("_0") ? 0.95 : 0.05) : key.startsWith("line_") ? noul(0.95) : choice("meets"));
+    expect(find(internshipOnly, "2+ years")).toContain("does_not_meet"); // 0.25 years
+    const bothRoles = verdictsWith("Northbrook Robotics", (key) =>
+      key.startsWith("role_") ? noul(0.95) : key.startsWith("line_") ? noul(0.95) : choice("meets"));
+    expect(find(bothRoles, "2+ years")).toContain("unclear"); // 17 months, overlap counted once: within a year of 2
   });
 
   it("keeps 'clearance not stated' as does_not_meet, but 'citizenship not stated' as unclear", () => {
@@ -80,7 +88,7 @@ describe("interpret", () => {
   it("falls back to the rules verdict when an answer is missing or malformed", () => {
     const base = assessJob(resume, jobAt("Lakeshore Logistics"));
     const { plan } = buildRequest(resume, jobAt("Lakeshore Logistics"), base.requirements);
-    const result = interpret(base, plan, { req_0: { type: "choice", choice: "meets" } }); // missing confidence
+    const result = interpret(base, plan, { req_0: { type: "choice", choice: "meets" } }, resume); // missing confidence
     expect(result.assessments).toEqual(base.assessments);
   });
 });

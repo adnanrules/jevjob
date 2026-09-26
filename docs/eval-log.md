@@ -75,3 +75,26 @@ Causes of the remaining Jev errors, found by reading held-out results (so **not*
 
 Next: fix 1 and 2 as bugs and report the held-out score again, clearly marked as *after seeing
 held-out*. A clean number after that needs a fresh held-out set.
+
+## 5. Bug fixes, AFTER seeing held-out (not a clean measurement)
+
+- Requirement extraction: "driver's license" no longer counts as a professional license.
+- Experience is now composed from atomic questions: code parses each resume role (title, bullets, dates),
+  Jev answers one yes/no per role ("is this role the kind of work the line asks for?"), and code adds up
+  the months of qualifying roles, counting overlapping months once. The rules keep their title heuristic.
+
+No thresholds were tuned in this entry.
+
+| | rules | jev |
+|---|---|---|
+| Held-out tier exact (entry 4 → now) | 5/18 → 5/18 | 10/18 → **14/18 (78%)** |
+| Held-out within one tier | 12/18 → 11/18 | 17/18 → **18/18** |
+| Held-out false-skip | 1/6 → 1/6 | 1/6 → **0/6** |
+| Held-out blocker precision | 2/5 → 2/2 | 3/6 → **3/3** |
+| Held-out requirement checks | 3/16 → 4/16 | 12/16 → 15/16 |
+| Dev tier exact | 32/40 → 32/40 | 30/40 → 30/40 |
+| Input tokens per job (held-out) | 0 | ~2,100 → ~2,340 (one extra Noul per role) |
+
+Because these fixes were found by reading held-out errors, the 14/18 is optimistic. The clean held-out number
+remains entry 4's 10/18. The honest claim is that the fixes addressed the diagnosed causes without hurting dev.
+A fresh held-out set is needed before calling any later number clean.
