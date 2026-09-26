@@ -14,7 +14,8 @@
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "demo": "tsx scripts/demo.ts",
     "eval": "tsx packages/eval/src/run.ts",
-    "compare": "tsx scripts/compare.ts"
+    "compare": "tsx scripts/compare.ts",
+    "sweep": "tsx packages/eval/src/sweep.ts"
   },
   "devDependencies": {
     "@types/node": "^26.6.2",

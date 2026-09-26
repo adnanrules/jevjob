@@ -69,12 +69,15 @@ function gitInfo(): Pick<RunInfo, "commit" | "dirty"> {
 }
 
 async function main() {
-  const assessor = pickAssessor(process.argv[2] ?? "rules");
+  const args = process.argv.slice(2);
+  // --dev: tune without ever seeing held-out results. Writes <name>.dev.md so the real report isn't overwritten.
+  const devOnly = args.includes("--dev");
+  const assessor = pickAssessor(args.find((a) => !a.startsWith("--")) ?? "rules");
   const data = loadDataset();
   const resumes = new Map([...data.resumes].map(([key, text]) => [key, parseResume(text, { asOf: data.asOf })]));
 
   const results: CaseResult[] = [];
-  for (const c of data.cases) {
+  for (const c of data.cases.filter((c) => !devOnly || c.split === "dev")) {
     const resume = resumes.get(c.resume);
     const job = data.jobs.get(c.job);
     if (!resume || !job) throw new Error(`Case ${c.id} points at a missing resume or job`);
@@ -92,8 +95,9 @@ async function main() {
 
   const outDir = new URL("../results/", import.meta.url);
   mkdirSync(outDir, { recursive: true });
-  writeFileSync(new URL(`${assessor.name}.md`, outDir), renderMarkdown(info, splits, results));
-  writeFileSync(new URL(`${assessor.name}.json`, outDir), JSON.stringify({ ...info, splits, results }, null, 2) + "\n");
+  const outName = devOnly ? `${assessor.name}.dev` : assessor.name;
+  writeFileSync(new URL(`${outName}.md`, outDir), renderMarkdown(info, splits, results));
+  writeFileSync(new URL(`${outName}.json`, outDir), JSON.stringify({ ...info, splits, results }, null, 2) + "\n");
 
   console.log(`${assessor.name}: ${results.length} cases, ${results.filter((r) => r.cached).length} answered from cache`);
   for (const split of ["test", "dev"] as const) {
@@ -107,7 +111,7 @@ async function main() {
     console.log(`  requirement checks ${formatRate(t.requirementChecks)}   not extracted ${t.notExtracted}`);
     console.log(`  latency ${latency}, ${t.callsPerJob.toFixed(1)} calls/job, ${Math.round(t.inputTokensPerJob)} input tokens/job`);
   }
-  console.log(`\nFull report: packages/eval/results/${assessor.name}.md`);
+  console.log(`\nFull report: packages/eval/results/${outName}.md`);
 }
 
 main().catch((err: unknown) => {

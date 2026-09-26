@@ -1,0 +1,1100 @@
+{
+  "system": "rules",
+  "commit": "66752a9",
+  "dirty": true,
+  "splits": {
+    "test": {
+      "cases": 0,
+      "tierAccuracy": {
+        "hits": 0,
+        "of": 0
+      },
+      "withinOneTier": {
+        "hits": 0,
+        "of": 0
+      },
+      "falseSkip": {
+        "hits": 0,
+        "of": 0
+      },
+      "falseApply": {
+        "hits": 0,
+        "of": 0
+      },
+      "blockerRecall": {
+        "hits": 0,
+        "of": 0
+      },
+      "blockerPrecision": {
+        "hits": 0,
+        "of": 0
+      },
+      "requirementChecks": {
+        "hits": 0,
+        "of": 0
+      },
+      "notExtracted": 0,
+      "meanLatencyMs": null,
+      "callsPerJob": 0,
+      "inputTokensPerJob": 0,
+      "confusion": {
+        "apply": {
+          "apply": 0,
+          "maybe": 0,
+          "stretch": 0,
+          "big_stretch": 0,
+          "no": 0
+        },
+        "maybe": {
+          "apply": 0,
+          "maybe": 0,
+          "stretch": 0,
+          "big_stretch": 0,
+          "no": 0
+        },
+        "stretch": {
+          "apply": 0,
+          "maybe": 0,
+          "stretch": 0,
+          "big_stretch": 0,
+          "no": 0
+        },
+        "big_stretch": {
+          "apply": 0,
+          "maybe": 0,
+          "stretch": 0,
+          "big_stretch": 0,
+          "no": 0
+        },
+        "no": {
+          "apply": 0,
+          "maybe": 0,
+          "stretch": 0,
+          "big_stretch": 0,
+          "no": 0
+        }
+      }
+    },
+    "dev": {
+      "cases": 40,
+      "tierAccuracy": {
+        "hits": 32,
+        "of": 40
+      },
+      "withinOneTier": {
+        "hits": 40,
+        "of": 40
+      },
+      "falseSkip": {
+        "hits": 0,
+        "of": 15
+      },
+      "falseApply": {
+        "hits": 0,
+        "of": 25
+      },
+      "blockerRecall": {
+        "hits": 8,
+        "of": 8
+      },
+      "blockerPrecision": {
+        "hits": 8,
+        "of": 8
+      },
+      "requirementChecks": {
+        "hits": 21,
+        "of": 30
+      },
+      "notExtracted": 0,
+      "meanLatencyMs": 0.1618750000000034,
+      "callsPerJob": 0,
+      "inputTokensPerJob": 0,
+      "confusion": {
+        "apply": {
+          "apply": 7,
+          "maybe": 1,
+          "stretch": 0,
+          "big_stretch": 0,
+          "no": 0
+        },
+        "maybe": {
+          "apply": 3,
+          "maybe": 4,
+          "stretch": 0,
+          "big_stretch": 0,
+          "no": 0
+        },
+        "stretch": {
+          "apply": 0,
+          "maybe": 1,
+          "stretch": 3,
+          "big_stretch": 2,
+          "no": 0
+        },
+        "big_stretch": {
+          "apply": 0,
+          "maybe": 0,
+          "stretch": 1,
+          "big_stretch": 14,
+          "no": 0
+        },
+        "no": {
+          "apply": 0,
+          "maybe": 0,
+          "stretch": 0,
+          "big_stretch": 0,
+          "no": 4
+        }
+      }
+    },
+    "all": {
+      "cases": 40,
+      "tierAccuracy": {
+        "hits": 32,
+        "of": 40
+      },
+      "withinOneTier": {
+        "hits": 40,
+        "of": 40
+      },
+      "falseSkip": {
+        "hits": 0,
+        "of": 15
+      },
+      "falseApply": {
+        "hits": 0,
+        "of": 25
+      },
+      "blockerRecall": {
+        "hits": 8,
+        "of": 8
+      },
+      "blockerPrecision": {
+        "hits": 8,
+        "of": 8
+      },
+      "requirementChecks": {
+        "hits": 21,
+        "of": 30
+      },
+      "notExtracted": 0,
+      "meanLatencyMs": 0.1618750000000034,
+      "callsPerJob": 0,
+      "inputTokensPerJob": 0,
+      "confusion": {
+        "apply": {
+          "apply": 7,
+          "maybe": 1,
+          "stretch": 0,
+          "big_stretch": 0,
+          "no": 0
+        },
+        "maybe": {
+          "apply": 3,
+          "maybe": 4,
+          "stretch": 0,
+          "big_stretch": 0,
+          "no": 0
+        },
+        "stretch": {
+          "apply": 0,
+          "maybe": 1,
+          "stretch": 3,
+          "big_stretch": 2,
+          "no": 0
+        },
+        "big_stretch": {
+          "apply": 0,
+          "maybe": 0,
+          "stretch": 1,
+          "big_stretch": 14,
+          "no": 0
+        },
+        "no": {
+          "apply": 0,
+          "maybe": 0,
+          "stretch": 0,
+          "big_stretch": 0,
+          "no": 4
+        }
+      }
+    }
+  },
+  "results": [
+    {
+      "id": "jordan/lakeshore-logistics:fixture:1001",
+      "split": "dev",
+      "expected": {
+        "tier": "apply",
+        "blockers": []
+      },
+      "predicted": {
+        "tier": "apply",
+        "blockers": []
+      },
+      "checks": [
+        {
+          "requirement": "Java or Python",
+          "expected": "meets",
+          "predicted": "meets"
+        }
+      ],
+      "latencyMs": 2.368499999999983,
+      "calls": 0,
+      "inputTokens": 0,
+      "cached": false
+    },
+    {
+      "id": "jordan/prairie-health-tech:fixture:2002",
+      "split": "dev",
+      "expected": {
+        "tier": "maybe",
+        "blockers": []
+      },
+      "predicted": {
+        "tier": "maybe",
+        "blockers": []
+      },
+      "checks": [
+        {
+          "requirement": "TypeScript",
+          "expected": "unclear",
+          "predicted": "unclear"
+        },
+        {
+          "requirement": "1+ years",
+          "expected": "unclear",
+          "predicted": "unclear"
+        }
+      ],
+      "latencyMs": 0.24679999999995061,
+      "calls": 0,
+      "inputTokens": 0,
+      "cached": false
+    },
+    {
+      "id": "jordan/northbrook-robotics:fixture:3003",
+      "split": "dev",
+      "expected": {
+        "tier": "stretch",
+        "blockers": []
+      },
+      "predicted": {
+        "tier": "big_stretch",
+        "blockers": []
+      },
+      "checks": [
+        {
+          "requirement": "Kubernetes",
+          "expected": "does_not_meet",
+          "predicted": "does_not_meet"
+        }
+      ],
+      "latencyMs": 0.11299999999999955,
+      "calls": 0,
+      "inputTokens": 0,
+      "cached": false
+    },
+    {
+      "id": "jordan/riverline-capital:fixture:4004",
+      "split": "dev",
+      "expected": {
+        "tier": "big_stretch",
+        "blockers": []
+      },
+      "predicted": {
+        "tier": "big_stretch",
+        "blockers": []
+      },
+      "checks": [],
+      "latencyMs": 0.08490000000000464,
+      "calls": 0,
+      "inputTokens": 0,
+      "cached": false
+    },
+    {
+      "id": "jordan/loop-defense-systems:fixture:5005",
+      "split": "dev",
+      "expected": {
+        "tier": "no",
+        "blockers": [
+          "security_clearance",
+          "experience_years"
+        ]
+      },
+      "predicted": {
+        "tier": "no",
+        "blockers": [
+          "experience_years",
+          "security_clearance"
+        ]
+      },
+      "checks": [
+        {
+          "requirement": "U.S. citizenship",
+          "expected": "unclear",
+          "predicted": "unclear"
+        },
+        {
+          "requirement": "clearance",
+          "expected": "does_not_meet",
+          "predicted": "does_not_meet"
+        }
+      ],
+      "latencyMs": 0.10669999999998936,
+      "calls": 0,
+      "inputTokens": 0,
+      "cached": false
+    },
+    {
+      "id": "jordan/wabash-analytics:eval:6006",
+      "split": "dev",
+      "expected": {
+        "tier": "maybe",
+        "blockers": []
+      },
+      "predicted": {
+        "tier": "maybe",
+        "blockers": []
+      },
+      "checks": [
+        {
+          "requirement": "Tableau or Power BI",
+          "expected": "does_not_meet",
+          "predicted": "unclear"
+        }
+      ],
+      "latencyMs": 0.07609999999999673,
+      "calls": 0,
+      "inputTokens": 0,
+      "cached": false
+    },
+    {
+      "id": "jordan/cardinal-cloud:eval:7007",
+      "split": "dev",
+      "expected": {
+        "tier": "big_stretch",
+        "blockers": []
+      },
+      "predicted": {
+        "tier": "big_stretch",
+        "blockers": []
+      },
+      "checks": [],
+      "latencyMs": 0.07370000000003074,
+      "calls": 0,
+      "inputTokens": 0,
+      "cached": false
+    },
+    {
+      "id": "jordan/harbor-point-health:eval:8008",
+      "split": "dev",
+      "expected": {
+        "tier": "maybe",
+        "blockers": []
+      },
+      "predicted": {
+        "tier": "maybe",
+        "blockers": []
+      },
+      "checks": [
+        {
+          "requirement": "HTML and CSS",
+          "expected": "unclear",
+          "predicted": "unclear"
+        },
+        {
+          "requirement": "degree is not required",
+          "expected": "meets",
+          "predicted": "meets"
+        }
+      ],
+      "latencyMs": 0.07480000000003884,
+      "calls": 0,
+      "inputTokens": 0,
+      "cached": false
+    },
+    {
+      "id": "jordan/meridian-bank:eval:9009",
+      "split": "dev",
+      "expected": {
+        "tier": "stretch",
+        "blockers": []
+      },
+      "predicted": {
+        "tier": "maybe",
+        "blockers": []
+      },
+      "checks": [
+        {
+          "requirement": "authorized to work",
+          "expected": "unclear",
+          "predicted": "unclear"
+        }
+      ],
+      "latencyMs": 0.06090000000000373,
+      "calls": 0,
+      "inputTokens": 0,
+      "cached": false
+    },
+    {
+      "id": "jordan/northwind-ai:eval:1010",
+      "split": "dev",
+      "expected": {
+        "tier": "stretch",
+        "blockers": []
+      },
+      "predicted": {
+        "tier": "stretch",
+        "blockers": []
+      },
+      "checks": [],
+      "latencyMs": 1.1435000000000173,
+      "calls": 0,
+      "inputTokens": 0,
+      "cached": false
+    },
+    {
+      "id": "priya/lakeshore-logistics:fixture:1001",
+      "split": "dev",
+      "expected": {
+        "tier": "big_stretch",
+        "blockers": []
+      },
+      "predicted": {
+        "tier": "big_stretch",
+        "blockers": []
+      },
+      "checks": [
+        {
+          "requirement": "Java or Python",
+          "expected": "does_not_meet",
+          "predicted": "does_not_meet"
+        }
+      ],
+      "latencyMs": 0.14039999999999964,
+      "calls": 0,
+      "inputTokens": 0,
+      "cached": false
+    },
+    {
+      "id": "priya/prairie-health-tech:fixture:2002",
+      "split": "dev",
+      "expected": {
+        "tier": "apply",
+        "blockers": []
+      },
+      "predicted": {
+        "tier": "apply",
+        "blockers": []
+      },
+      "checks": [
+        {
+          "requirement": "equivalent practical experience",
+          "expected": "meets",
+          "predicted": "unclear"
+        },
+        {
+          "requirement": "REST APIs",
+          "expected": "unclear",
+          "predicted": "meets"
+        }
+      ],
+      "latencyMs": 0.09529999999995198,
+      "calls": 0,
+      "inputTokens": 0,
+      "cached": false
+    },
+    {
+      "id": "priya/northbrook-robotics:fixture:3003",
+      "split": "dev",
+      "expected": {
+        "tier": "big_stretch",
+        "blockers": []
+      },
+      "predicted": {
+        "tier": "big_stretch",
+        "blockers": []
+      },
+      "checks": [],
+      "latencyMs": 0.0775000000000432,
+      "calls": 0,
+      "inputTokens": 0,
+      "cached": false
+    },
+    {
+      "id": "priya/riverline-capital:fixture:4004",
+      "split": "dev",
+      "expected": {
+        "tier": "big_stretch",
+        "blockers": []
+      },
+      "predicted": {
+        "tier": "big_stretch",
+        "blockers": []
+      },
+      "checks": [],
+      "latencyMs": 0.10379999999997835,
+      "calls": 0,
+      "inputTokens": 0,
+      "cached": false
+    },
+    {
+      "id": "priya/loop-defense-systems:fixture:5005",
+      "split": "dev",
+      "expected": {
+        "tier": "no",
+        "blockers": [
+          "security_clearance",
+          "experience_years"
+        ]
+      },
+      "predicted": {
+        "tier": "no",
+        "blockers": [
+          "experience_years",
+          "security_clearance"
+        ]
+      },
+      "checks": [],
+      "latencyMs": 0.07450000000000045,
+      "calls": 0,
+      "inputTokens": 0,
+      "cached": false
+    },
+    {
+      "id": "priya/wabash-analytics:eval:6006",
+      "split": "dev",
+      "expected": {
+        "tier": "big_stretch",
+        "blockers": []
+      },
+      "predicted": {
+        "tier": "big_stretch",
+        "blockers": []
+      },
+      "checks": [],
+      "latencyMs": 0.059799999999995634,
+      "calls": 0,
+      "inputTokens": 0,
+      "cached": false
+    },
+    {
+      "id": "priya/cardinal-cloud:eval:7007",
+      "split": "dev",
+      "expected": {
+        "tier": "big_stretch",
+        "blockers": []
+      },
+      "predicted": {
+        "tier": "big_stretch",
+        "blockers": []
+      },
+      "checks": [],
+      "latencyMs": 0.0513000000000261,
+      "calls": 0,
+      "inputTokens": 0,
+      "cached": false
+    },
+    {
+      "id": "priya/harbor-point-health:eval:8008",
+      "split": "dev",
+      "expected": {
+        "tier": "apply",
+        "blockers": []
+      },
+      "predicted": {
+        "tier": "maybe",
+        "blockers": []
+      },
+      "checks": [
+        {
+          "requirement": "degree is not required",
+          "expected": "meets",
+          "predicted": "does_not_meet"
+        },
+        {
+          "requirement": "HTML and CSS",
+          "expected": "meets",
+          "predicted": "unclear"
+        }
+      ],
+      "latencyMs": 0.056300000000021555,
+      "calls": 0,
+      "inputTokens": 0,
+      "cached": false
+    },
+    {
+      "id": "priya/meridian-bank:eval:9009",
+      "split": "dev",
+      "expected": {
+        "tier": "big_stretch",
+        "blockers": []
+      },
+      "predicted": {
+        "tier": "big_stretch",
+        "blockers": []
+      },
+      "checks": [],
+      "latencyMs": 0.04719999999997526,
+      "calls": 0,
+      "inputTokens": 0,
+      "cached": false
+    },
+    {
+      "id": "priya/northwind-ai:eval:1010",
+      "split": "dev",
+      "expected": {
+        "tier": "stretch",
+        "blockers": []
+      },
+      "predicted": {
+        "tier": "stretch",
+        "blockers": []
+      },
+      "checks": [
+        {
+          "requirement": "Strong Python",
+          "expected": "does_not_meet",
+          "predicted": "does_not_meet"
+        },
+        {
+          "requirement": "applications with LLMs",
+          "expected": "meets",
+          "predicted": "meets"
+        }
+      ],
+      "latencyMs": 0.07580000000001519,
+      "calls": 0,
+      "inputTokens": 0,
+      "cached": false
+    },
+    {
+      "id": "marcus/lakeshore-logistics:fixture:1001",
+      "split": "dev",
+      "expected": {
+        "tier": "maybe",
+        "blockers": []
+      },
+      "predicted": {
+        "tier": "apply",
+        "blockers": []
+      },
+      "checks": [],
+      "latencyMs": 0.08840000000003556,
+      "calls": 0,
+      "inputTokens": 0,
+      "cached": false
+    },
+    {
+      "id": "marcus/prairie-health-tech:fixture:2002",
+      "split": "dev",
+      "expected": {
+        "tier": "stretch",
+        "blockers": []
+      },
+      "predicted": {
+        "tier": "big_stretch",
+        "blockers": []
+      },
+      "checks": [
+        {
+          "requirement": "TypeScript and React",
+          "expected": "does_not_meet",
+          "predicted": "does_not_meet"
+        }
+      ],
+      "latencyMs": 0.08089999999998554,
+      "calls": 0,
+      "inputTokens": 0,
+      "cached": false
+    },
+    {
+      "id": "marcus/northbrook-robotics:fixture:3003",
+      "split": "dev",
+      "expected": {
+        "tier": "apply",
+        "blockers": []
+      },
+      "predicted": {
+        "tier": "apply",
+        "blockers": []
+      },
+      "checks": [
+        {
+          "requirement": "distributed systems",
+          "expected": "meets",
+          "predicted": "does_not_meet"
+        }
+      ],
+      "latencyMs": 0.098700000000008,
+      "calls": 0,
+      "inputTokens": 0,
+      "cached": false
+    },
+    {
+      "id": "marcus/riverline-capital:fixture:4004",
+      "split": "dev",
+      "expected": {
+        "tier": "big_stretch",
+        "blockers": []
+      },
+      "predicted": {
+        "tier": "big_stretch",
+        "blockers": []
+      },
+      "checks": [],
+      "latencyMs": 0.09539999999998372,
+      "calls": 0,
+      "inputTokens": 0,
+      "cached": false
+    },
+    {
+      "id": "marcus/loop-defense-systems:fixture:5005",
+      "split": "dev",
+      "expected": {
+        "tier": "no",
+        "blockers": [
+          "security_clearance",
+          "experience_years"
+        ]
+      },
+      "predicted": {
+        "tier": "no",
+        "blockers": [
+          "experience_years",
+          "security_clearance"
+        ]
+      },
+      "checks": [
+        {
+          "requirement": "U.S. citizenship",
+          "expected": "meets",
+          "predicted": "meets"
+        }
+      ],
+      "latencyMs": 0.0786000000000513,
+      "calls": 0,
+      "inputTokens": 0,
+      "cached": false
+    },
+    {
+      "id": "marcus/wabash-analytics:eval:6006",
+      "split": "dev",
+      "expected": {
+        "tier": "maybe",
+        "blockers": []
+      },
+      "predicted": {
+        "tier": "apply",
+        "blockers": []
+      },
+      "checks": [],
+      "latencyMs": 0.07530000000002701,
+      "calls": 0,
+      "inputTokens": 0,
+      "cached": false
+    },
+    {
+      "id": "marcus/cardinal-cloud:eval:7007",
+      "split": "dev",
+      "expected": {
+        "tier": "apply",
+        "blockers": []
+      },
+      "predicted": {
+        "tier": "apply",
+        "blockers": []
+      },
+      "checks": [
+        {
+          "requirement": "Kubernetes and Terraform",
+          "expected": "meets",
+          "predicted": "meets"
+        },
+        {
+          "requirement": "on-call",
+          "expected": "meets",
+          "predicted": "unclear"
+        }
+      ],
+      "latencyMs": 0.07130000000000791,
+      "calls": 0,
+      "inputTokens": 0,
+      "cached": false
+    },
+    {
+      "id": "marcus/harbor-point-health:eval:8008",
+      "split": "dev",
+      "expected": {
+        "tier": "big_stretch",
+        "blockers": []
+      },
+      "predicted": {
+        "tier": "big_stretch",
+        "blockers": []
+      },
+      "checks": [],
+      "latencyMs": 0.08140000000003056,
+      "calls": 0,
+      "inputTokens": 0,
+      "cached": false
+    },
+    {
+      "id": "marcus/meridian-bank:eval:9009",
+      "split": "dev",
+      "expected": {
+        "tier": "stretch",
+        "blockers": []
+      },
+      "predicted": {
+        "tier": "stretch",
+        "blockers": []
+      },
+      "checks": [
+        {
+          "requirement": "authorized to work",
+          "expected": "meets",
+          "predicted": "unclear"
+        }
+      ],
+      "latencyMs": 0.07569999999998345,
+      "calls": 0,
+      "inputTokens": 0,
+      "cached": false
+    },
+    {
+      "id": "marcus/northwind-ai:eval:1010",
+      "split": "dev",
+      "expected": {
+        "tier": "maybe",
+        "blockers": []
+      },
+      "predicted": {
+        "tier": "maybe",
+        "blockers": []
+      },
+      "checks": [],
+      "latencyMs": 0.07699999999999818,
+      "calls": 0,
+      "inputTokens": 0,
+      "cached": false
+    },
+    {
+      "id": "elena/lakeshore-logistics:fixture:1001",
+      "split": "dev",
+      "expected": {
+        "tier": "apply",
+        "blockers": []
+      },
+      "predicted": {
+        "tier": "apply",
+        "blockers": []
+      },
+      "checks": [
+        {
+          "requirement": "Computer Science or a related field",
+          "expected": "meets",
+          "predicted": "meets"
+        }
+      ],
+      "latencyMs": 0.08440000000001646,
+      "calls": 0,
+      "inputTokens": 0,
+      "cached": false
+    },
+    {
+      "id": "elena/prairie-health-tech:fixture:2002",
+      "split": "dev",
+      "expected": {
+        "tier": "big_stretch",
+        "blockers": []
+      },
+      "predicted": {
+        "tier": "big_stretch",
+        "blockers": []
+      },
+      "checks": [],
+      "latencyMs": 0.06799999999998363,
+      "calls": 0,
+      "inputTokens": 0,
+      "cached": false
+    },
+    {
+      "id": "elena/northbrook-robotics:fixture:3003",
+      "split": "dev",
+      "expected": {
+        "tier": "big_stretch",
+        "blockers": []
+      },
+      "predicted": {
+        "tier": "big_stretch",
+        "blockers": []
+      },
+      "checks": [],
+      "latencyMs": 0.06110000000001037,
+      "calls": 0,
+      "inputTokens": 0,
+      "cached": false
+    },
+    {
+      "id": "elena/riverline-capital:fixture:4004",
+      "split": "dev",
+      "expected": {
+        "tier": "maybe",
+        "blockers": []
+      },
+      "predicted": {
+        "tier": "apply",
+        "blockers": []
+      },
+      "checks": [
+        {
+          "requirement": "3+ years deploying",
+          "expected": "unclear",
+          "predicted": "unclear"
+        },
+        {
+          "requirement": "MS or PhD",
+          "expected": "meets",
+          "predicted": "meets"
+        }
+      ],
+      "latencyMs": 0.054100000000005366,
+      "calls": 0,
+      "inputTokens": 0,
+      "cached": false
+    },
+    {
+      "id": "elena/loop-defense-systems:fixture:5005",
+      "split": "dev",
+      "expected": {
+        "tier": "no",
+        "blockers": [
+          "security_clearance",
+          "experience_years"
+        ]
+      },
+      "predicted": {
+        "tier": "no",
+        "blockers": [
+          "experience_years",
+          "security_clearance"
+        ]
+      },
+      "checks": [],
+      "latencyMs": 0.04370000000000118,
+      "calls": 0,
+      "inputTokens": 0,
+      "cached": false
+    },
+    {
+      "id": "elena/wabash-analytics:eval:6006",
+      "split": "dev",
+      "expected": {
+        "tier": "apply",
+        "blockers": []
+      },
+      "predicted": {
+        "tier": "apply",
+        "blockers": []
+      },
+      "checks": [
+        {
+          "requirement": "Tableau or Power BI",
+          "expected": "meets",
+          "predicted": "unclear"
+        },
+        {
+          "requirement": "Python or R",
+          "expected": "meets",
+          "predicted": "meets"
+        }
+      ],
+      "latencyMs": 0.04719999999997526,
+      "calls": 0,
+      "inputTokens": 0,
+      "cached": false
+    },
+    {
+      "id": "elena/cardinal-cloud:eval:7007",
+      "split": "dev",
+      "expected": {
+        "tier": "big_stretch",
+        "blockers": []
+      },
+      "predicted": {
+        "tier": "big_stretch",
+        "blockers": []
+      },
+      "checks": [],
+      "latencyMs": 0.04389999999995098,
+      "calls": 0,
+      "inputTokens": 0,
+      "cached": false
+    },
+    {
+      "id": "elena/harbor-point-health:eval:8008",
+      "split": "dev",
+      "expected": {
+        "tier": "big_stretch",
+        "blockers": []
+      },
+      "predicted": {
+        "tier": "big_stretch",
+        "blockers": []
+      },
+      "checks": [],
+      "latencyMs": 0.04040000000003374,
+      "calls": 0,
+      "inputTokens": 0,
+      "cached": false
+    },
+    {
+      "id": "elena/meridian-bank:eval:9009",
+      "split": "dev",
+      "expected": {
+        "tier": "big_stretch",
+        "blockers": []
+      },
+      "predicted": {
+        "tier": "stretch",
+        "blockers": []
+      },
+      "checks": [
+        {
+          "requirement": "authorized to work",
+          "expected": "meets",
+          "predicted": "meets"
+        }
+      ],
+      "latencyMs": 0.03509999999999991,
+      "calls": 0,
+      "inputTokens": 0,
+      "cached": false
+    },
+    {
+      "id": "elena/northwind-ai:eval:1010",
+      "split": "dev",
+      "expected": {
+        "tier": "apply",
+        "blockers": []
+      },
+      "predicted": {
+        "tier": "apply",
+        "blockers": []
+      },
+      "checks": [
+        {
+          "requirement": "applications with LLMs",
+          "expected": "meets",
+          "predicted": "meets"
+        }
+      ],
+      "latencyMs": 0.043600000000026284,
+      "calls": 0,
+      "inputTokens": 0,
+      "cached": false
+    }
+  ]
+}
