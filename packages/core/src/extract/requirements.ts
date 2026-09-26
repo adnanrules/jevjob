@@ -3,6 +3,7 @@
 // not the candidate, so they're skipped.
 import type { Importance, RawJob, Requirement } from "../domain";
 import { findSkills } from "../skills";
+import { normalizePosting } from "./posting";
 import { findDegrees, findEligibility, findMinYears } from "./patterns";
 
 // Keywords can sit anywhere in a header: real postings say things like
@@ -15,11 +16,23 @@ const MAX_HEADER_LENGTH = 90;
 // "-", "*" and "–" need a space after them ("**Bold**" isn't a bullet); "●Line" often has none.
 const BULLET = /^(?:[-*–]\s+|[•●▪◦‣]\s*)/;
 
+/**
+ * Requirements from a posting's headers and bullets. Postings whose list markup was stripped (job boards, copied
+ * pages) get a second pass on the normalized text, where headers and bullets have been rebuilt.
+ */
 export function extractRequirements(job: RawJob): Requirement[] {
+  const direct = extractFrom(job.description, job.id);
+  const required = (reqs: Requirement[]) => reqs.filter((r) => r.importance === "required").length;
+  if (required(direct) >= 3) return direct;
+  const rebuilt = extractFrom(normalizePosting(job.description), job.id);
+  return required(rebuilt) > required(direct) ? rebuilt : direct;
+}
+
+function extractFrom(description: string, jobId: string): Requirement[] {
   const requirements: Requirement[] = [];
   let section: Importance | null = null;
 
-  for (const raw of job.description.split("\n")) {
+  for (const raw of description.split("\n")) {
     const line = raw.trim();
     if (!line) continue;
     if (!BULLET.test(line)) {
@@ -29,7 +42,7 @@ export function extractRequirements(job: RawJob): Requirement[] {
       section = !header ? null : PREFERRED_HEADER.test(line) ? "preferred" : REQUIRED_HEADER.test(line) ? "required" : null;
       continue;
     }
-    if (section) requirements.push(...fromLine(line.replace(BULLET, ""), section, job.id, requirements.length));
+    if (section) requirements.push(...fromLine(line.replace(BULLET, ""), section, jobId, requirements.length));
   }
   return requirements;
 }
@@ -49,7 +62,7 @@ export function requirementsFromLines(lines: Array<{ text: string; importance: I
  * recognizable requirements header. Bullets first; if a posting barely uses bullets, its sentences too.
  */
 export function candidateLines(description: string, max = 70): string[] {
-  const lines = description.split("\n").map((l) => l.trim()).filter(Boolean);
+  const lines = normalizePosting(description).split("\n").map((l) => l.trim()).filter(Boolean);
   const bullets = lines.filter((l) => BULLET.test(l)).map((l) => l.replace(BULLET, "").trim());
   const sentences =
     bullets.length >= 5

@@ -60,8 +60,11 @@ button { font: inherit; color: inherit; cursor: pointer; }
 .segmented button:disabled { opacity: 0.35; cursor: not-allowed; }
 
 /* ── Landing ─────────────────────────────────────────────────────────────── */
-.landing { max-width: 600px; padding-top: 14vh; }
-.headline { font-size: clamp(40px, 5vw, 60px); font-weight: 500; letter-spacing: -0.035em; line-height: 1.02; margin: 0; }
+.landing { display: grid; grid-template-columns: minmax(0, 600px) minmax(0, 420px); justify-content: space-between; align-items: center; gap: 56px; padding-top: 12vh; }
+.landing-main { min-width: 0; }
+.headline { font-size: clamp(40px, 5vw, 60px); font-weight: 500; letter-spacing: -0.035em; line-height: 1.04; margin: 0; }
+.headline .w { display: inline-block; overflow: hidden; vertical-align: top; padding-bottom: 0.06em; margin-right: 0.24em; }
+.headline .w > span { display: inline-block; }
 .subline { color: var(--muted); font-size: 15px; margin: 16px 0 36px; }
 .subline b { color: var(--ink-2); font-weight: 500; font-family: var(--font-mono); font-size: 14px; }
 
@@ -225,4 +228,74 @@ button { font: inherit; color: inherit; cursor: pointer; }
 [data-still] *, [data-still] *::before, [data-still] *::after { animation: none !important; transition: none !important; }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; }
+}
+
+/* ── Landing: the live specimen ─────────────────────────────────────────── */
+.specimen-card {
+  border: 1px solid var(--line-2); border-radius: 16px; padding: 18px 20px 12px; background: rgba(12, 13, 16, 0.78);
+  backdrop-filter: blur(6px); box-shadow: 0 40px 120px -50px rgba(0, 0, 0, 0.9);
+}
+.specimen-head { display: flex; align-items: center; justify-content: space-between; font-size: 12px; color: var(--muted); margin-bottom: 10px; font-family: var(--font-mono); letter-spacing: 0.04em; }
+.specimen-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--t-apply); }
+.specimen-dot[data-busy="true"] { background: var(--ink-2); animation: blink 0.7s steps(2) infinite; }
+@keyframes blink { 50% { opacity: 0.2; } }
+.specimen-row { display: grid; grid-template-columns: 30px 1fr auto; align-items: center; gap: 14px; padding: 10px 0; border-top: 1px solid var(--line); }
+.specimen-rank { font-family: var(--font-condensed); font-weight: 600; font-size: 24px; line-height: 1; text-align: right; }
+.specimen-lines { display: grid; gap: 6px; }
+.specimen-lines i { display: block; height: 6px; border-radius: 3px; background: var(--line-2); }
+.specimen-lines i + i { height: 4px; background: #1d2026; }
+.specimen-bars { display: flex; align-items: flex-end; gap: 2px; height: 16px; }
+.specimen-bars b { display: block; width: 3px; height: 16px; border-radius: 1px; transform-origin: bottom; background: var(--line-2); }
+
+/* ── Run: the verdict figures ───────────────────────────────────────────── */
+.verdict { display: flex; gap: 44px; margin: 30px 0 4px; flex-wrap: wrap; }
+.figure b { display: block; font-family: var(--font-condensed); font-weight: 600; font-size: 56px; line-height: 0.9; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
+.figure span { font-size: 13px; color: var(--muted); }
+
+.board-title { display: flex; align-items: center; gap: 16px; }
+.segmented.small button { padding: 3px 10px; font-size: 12px; }
+.pay { color: var(--ink-2); }
+
+/* ── Fit map ────────────────────────────────────────────────────────────── */
+.fitmap { position: relative; margin-top: 14px; padding: 0 0 34px 26px; }
+.fitmap-plot {
+  position: relative; height: 440px; border-left: 1px solid var(--line-2); border-bottom: 1px solid var(--line-2);
+  background: radial-gradient(420px 260px at 100% 0%, rgba(63, 207, 142, 0.07), transparent 70%), rgba(10, 11, 13, 0.55);
+}
+.fitmap-sweet { position: absolute; top: 12px; right: 14px; font-size: 11.5px; font-family: var(--font-mono); color: var(--t-apply); opacity: 0.7; letter-spacing: 0.06em; }
+.fitmap-plot .grid { position: absolute; background: var(--line); }
+.fitmap-plot .grid.v { top: 0; bottom: 0; width: 1px; }
+.fitmap-plot .grid.h { left: 0; right: 0; height: 1px; }
+.dot {
+  position: absolute; width: 12px; height: 12px; margin: -6px 0 0 -6px; border-radius: 50%; border: 0; padding: 0; cursor: pointer;
+  background: var(--tier); box-shadow: 0 0 0 3px rgba(10, 11, 13, 0.9), 0 0 18px -2px var(--tier);
+}
+.dot-tip {
+  position: absolute; transform: translate(14px, -50%); pointer-events: none; z-index: 2; white-space: nowrap;
+  background: var(--panel); border: 1px solid var(--line-2); border-radius: 8px; padding: 8px 11px; font-size: 13px;
+}
+.dot-tip[data-flip="true"] { transform: translate(calc(-100% - 14px), -50%); }
+.dot-tip span { display: block; color: var(--muted); font-size: 12px; margin-top: 2px; }
+.fitmap-axis { position: absolute; font-size: 12px; color: var(--muted); }
+.fitmap-axis.x { left: 26px; right: 0; bottom: 8px; display: flex; justify-content: space-between; }
+.fitmap-axis.y { left: -4px; top: 0; writing-mode: vertical-rl; transform: rotate(180deg); }
+
+/* ── Batches ────────────────────────────────────────────────────────────── */
+.batches { display: flex; align-items: center; justify-content: space-between; gap: 18px; flex-wrap: wrap; margin-top: 26px; }
+.batch-pills { display: flex; gap: 6px; flex-wrap: wrap; }
+.batch-pills button { background: none; border: 1px solid var(--line-2); border-radius: 7px; padding: 5px 11px; font-family: var(--font-mono); font-size: 12px; color: var(--muted); }
+.batch-pills button[aria-pressed="true"] { color: var(--ink); border-color: var(--ink-2); }
+.load-more span { transition: transform 0.25s var(--ease); display: inline-block; }
+.load-more:hover span { transform: translateY(2px); }
+.more-hint { display: flex; align-items: center; gap: 12px; font-size: 13px; color: var(--muted); flex-wrap: wrap; }
+.cmd { display: inline-flex; align-items: center; gap: 10px; border: 1px solid var(--line-2); background: #0c0d10; border-radius: 8px; padding: 6px 8px 6px 12px; }
+.cmd code { font-family: var(--font-mono); font-size: 13px; color: var(--ink); }
+.cmd span { font-size: 11.5px; color: var(--muted); border-left: 1px solid var(--line-2); padding-left: 8px; }
+
+@media (max-width: 900px) {
+  .landing { grid-template-columns: 1fr; padding-top: 6vh; }
+  .specimen-card { display: none; }
+  .verdict { gap: 26px; }
+  .figure b { font-size: 40px; }
+  .fitmap-plot { height: 340px; }
 }

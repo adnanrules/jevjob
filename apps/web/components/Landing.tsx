@@ -1,6 +1,8 @@
 "use client";
 import { useRef, useState } from "react";
 import { motion } from "motion/react";
+import { pulse } from "./Background";
+import { Specimen } from "./Specimen";
 
 export interface Sample { key: string; name: string; headline: string; text: string }
 export interface Setup { samples: Sample[]; jev: { model: string } | null; source: "harness" | "demo"; jobCount: number }
@@ -46,7 +48,8 @@ export function Landing({ setup, onRun, error: runError, onDragChange }: {
       exit={{ opacity: 0, y: -8, transition: { duration: 0.2 } }}
       transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
     >
-      <h1 className="headline">Where should you apply?</h1>
+      <div className="landing-main">
+      <Headline text="Where should you apply?" />
       <p className="subline">
         {setup ? (
           <><b>{count}</b> {setup.source === "harness" ? "job listings loaded" : "sample roles (fictional)"}, ranked against your resume.</>
@@ -60,6 +63,7 @@ export function Landing({ setup, onRun, error: runError, onDragChange }: {
         onDrop={(e) => {
           e.preventDefault();
           drag(false);
+          pulse(e.clientX, e.clientY, "rgb(63, 207, 142)");
           const file = e.dataTransfer.files[0];
           if (file) void readFile(file);
         }}
@@ -108,7 +112,24 @@ export function Landing({ setup, onRun, error: runError, onDragChange }: {
           ))}
         </div>
       )}
+      </div>
+      <Specimen />
     </motion.section>
+  );
+}
+
+/** Words rise into place one after another, each behind its own mask. */
+function Headline({ text }: { text: string }) {
+  return (
+    <h1 className="headline" aria-label={text}>
+      {text.split(" ").map((word, i) => (
+        <span className="w" key={i} aria-hidden>
+          <motion.span initial={{ y: "105%" }} animate={{ y: 0 }} transition={{ delay: 0.08 + i * 0.07, duration: 0.8, ease: [0.22, 1, 0.36, 1] }}>
+            {word}
+          </motion.span>
+        </span>
+      ))}
+    </h1>
   );
 }
 

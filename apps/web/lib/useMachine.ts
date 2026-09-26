@@ -27,6 +27,10 @@ export interface MachineState {
   source: "harness" | "demo" | null;
   /** Which version of the job pool this run ranked; the page compares it with the live pool. */
   poolVersion: string | null;
+  /** This run's batch of up to 50, and how many batches the pool holds. */
+  batch: number;
+  batches: number;
+  poolSize: number;
   order: string[];
   jobs: Record<string, JobState>;
   error: string | null;
@@ -37,7 +41,7 @@ type Action =
   | { type: "event"; event: RankEvent }
   | { type: "stage"; id: string; stage: Stage; revealed?: boolean };
 
-const initial: MachineState = { status: "idle", assessor: null, model: null, source: null, poolVersion: null, order: [], jobs: {}, error: null };
+const initial: MachineState = { status: "idle", assessor: null, model: null, source: null, poolVersion: null, batch: 0, batches: 0, poolSize: 0, order: [], jobs: {}, error: null };
 
 function reducer(state: MachineState, action: Action): MachineState {
   if (action.type === "reset") return initial;
@@ -56,6 +60,9 @@ function reducer(state: MachineState, action: Action): MachineState {
         model: e.model,
         source: e.source,
         poolVersion: e.poolVersion,
+        batch: e.batch,
+        batches: e.batches,
+        poolSize: e.poolSize,
         order: e.jobs.map((j) => j.id),
         jobs: Object.fromEntries(
           e.jobs.map((card) => [card.id, { card, stage: "found", requirements: null, assessed: null, revealed: false, ms: null, cached: false, fallback: false }]),
@@ -99,7 +106,7 @@ export function useMachine() {
   useEffect(() => clear, [clear]);
 
   const start = useCallback(
-    async (resume: string, assessor: "rules" | "jev") => {
+    async (resume: string, assessor: "rules" | "jev", batch = 0) => {
       clear();
       const runId = ++run.current;
       dispatch({ type: "reset" });
@@ -107,7 +114,7 @@ export function useMachine() {
       const response = await fetch("/api/rank", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ resume, assessor }),
+        body: JSON.stringify({ resume, assessor, batch }),
       }).catch(() => null);
       if (!response?.ok || !response.body) {
         const message = response ? ((await response.json().catch(() => null)) as { error?: string } | null)?.error : null;

@@ -26,6 +26,7 @@ function Row({ r, onOpen: open }: { r: RankedJob; onOpen: (id: string, tab: Deta
     <motion.div
       layout="position"
       className="row"
+      data-row={r.job.id}
       style={{ ["--tier" as string]: tier.color }}
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
@@ -43,7 +44,10 @@ function Row({ r, onOpen: open }: { r: RankedJob; onOpen: (id: string, tab: Deta
       <Chip id={r.job.id} company={r.job.company} />
       <div className="who">
         <div className="title">{r.job.title}</div>
-        <div className="sub">{r.job.company}{r.job.location ? ` · ${r.job.location}` : ""}</div>
+        <div className="sub">
+          {r.job.company}{r.job.location ? ` · ${r.job.location}` : ""}
+          {r.job.pay && <span className="pay"> · {r.job.pay}</span>}
+        </div>
       </div>
       {r.requirements.length ? <Barcode assessed={r} revealed /> : <span className="unread">no requirements listed</span>}
       <div className="cov" title="Required qualifications you meet">{req.total ? `${req.met}/${req.total}` : "–"}</div>

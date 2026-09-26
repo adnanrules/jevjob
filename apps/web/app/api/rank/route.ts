@@ -8,9 +8,11 @@ export const dynamic = "force-dynamic";
 
 const MAX_RESUME_CHARS = 30_000;
 const CONCURRENCY = 4;
+/** Postings ranked and shown at a time. */
+const BATCH_SIZE = 50;
 
 export async function POST(request: Request) {
-  const body = (await request.json().catch(() => ({}))) as { resume?: unknown; assessor?: unknown };
+  const body = (await request.json().catch(() => ({}))) as { resume?: unknown; assessor?: unknown; batch?: unknown };
   // Don't trim the content itself: it's part of the Jev cache key, and the eval sends files untouched.
   const text = typeof body.resume === "string" ? body.resume : "";
   if (!text.trim()) return Response.json({ error: "Paste a resume first." }, { status: 400 });
@@ -20,7 +22,10 @@ export async function POST(request: Request) {
   const assessor = getAssessor(wanted);
   const resume = parseResume(text);
   const version = poolVersion();
-  const { source, jobs } = loadJobs();
+  const { source, jobs: pool } = loadJobs();
+  const batches = Math.max(1, Math.ceil(pool.length / BATCH_SIZE));
+  const batch = Math.min(Math.max(0, Math.floor(Number(body.batch) || 0)), batches - 1);
+  const jobs = pool.slice(batch * BATCH_SIZE, (batch + 1) * BATCH_SIZE);
 
   const encoder = new TextEncoder();
   const stream = new ReadableStream<Uint8Array>({
@@ -32,6 +37,9 @@ export async function POST(request: Request) {
         model: wanted === "jev" ? jevModel() : null,
         source,
         poolVersion: version,
+        batch,
+        batches,
+        poolSize: pool.length,
         jobs: jobs.map(({ id, company, title, location, applyUrl }) => ({ id, company, title, location, applyUrl })),
       });
 
