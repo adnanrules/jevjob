@@ -2,7 +2,7 @@
 // the chat model does, and hands JevJob the plugin's raw output. JevJob does everything else, so the model never
 // has to judge a posting:
 //
-//   start_search         plan: titles, level, and areas in widening order (city → nearby → state → remote US)
+//   start_search         plan: titles, level, and areas in widening order (city → largest nearby cities → state → remote US)
 //   add_search_results   parse a search_jobs result; drop wrong titles/levels/places/duplicates; hold back
 //                        postings that only miss the date window; answer "fetch these ids"
 //   add_jobs             parse get_job_details (or postings from the model's own web search); final checks; load
@@ -20,7 +20,7 @@ import { createHash } from "node:crypto";
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { normalizeJobs, normalizePosting, type RawJob } from "@jevjob/core";
-import { homeState, placement, searchAreas, type SearchArea } from "./geography";
+import { homeState, placement, placeRank, searchAreas, type SearchArea } from "./geography";
 import { levelFit, searchDays, titleFit, type SearchPlan } from "./intent";
 import { currentJobs, loadJobs } from "./jobs";
 import { SEARCH_FILE } from "./paths";
@@ -51,8 +51,9 @@ export interface Listing {
   pay?: string | undefined;
 }
 
-type Queued = Listing & { home: boolean };
-type Candidate = RawJob & { home: boolean };
+/** `place`: placeRank of where the posting is (near 3, rest of the state 2, remote 1, unknown 0). */
+type Queued = Listing & { place: number };
+type Candidate = RawJob & { place: number };
 
 export interface Search {
   plan: SearchPlan;
@@ -87,7 +88,10 @@ export function readSearch(): Search | null {
   if (!existsSync(SEARCH_FILE)) return null;
   const s = JSON.parse(readFileSync(SEARCH_FILE, "utf8")) as Partial<Search>;
   // Search files written before near misses and saturation existed.
-  return { nearMisses: [], nearMissJobs: [], window: null, dry: {}, dryStreak: 0, saturated: [], careerSites: "done", ...s } as Search;
+  const search = { nearMisses: [], nearMissJobs: [], window: null, dry: {}, dryStreak: 0, saturated: [], careerSites: "done", ...s } as Search;
+  // Before 1.1, entries carried `home: boolean` instead of a place rank.
+  const rank = <T extends { place: number }>(x: T) => (typeof x.place === "number" ? x : { ...x, place: (x as { home?: boolean }).home ? 2 : 1 });
+  return { ...search, queue: search.queue.map(rank), nearMisses: search.nearMisses.map(rank), nearMissJobs: search.nearMissJobs.map(rank) };
 }
 export function saveSearch(s: Search): void {
   mkdirSync(path.dirname(SEARCH_FILE), { recursive: true });
@@ -322,7 +326,7 @@ export function addSearchResults(raw: string, searched?: { title: string; locati
     if (/internship/i.test(l.jobType ?? "") && !s.plan.internships) { skip(s, "internship"); continue; }
     const age = ageOf(s, l.postedAt);
     if (age === "old") { skip(s, "too old"); continue; }
-    (age === "held" ? s.nearMisses : s.queue).push({ ...l, home: where === "home" });
+    (age === "held" ? s.nearMisses : s.queue).push({ ...l, place: placeRank(where) });
   }
   s.seen = [...seen];
   const usable = s.queue.length - before + (s.nearMisses.length - heldBefore);
@@ -361,10 +365,10 @@ function noteDryness(s: Search, area: string, usable: number): void {
   if (s.dryStreak >= DRY_LOCAL) for (const a of s.areas) if (!a.remoteOnly) saturate(a.query.toLowerCase());
 }
 
-/** In-state first, then explicit entry-level titles, then in-window before widened, then newest. */
+/** Nearest first (near, the rest of the state, remote), then explicit entry-level titles, then in-window, then newest. */
 function sortQueue(s: Search): void {
   const outside = (l: Queued) => Number(ageOf(s, l.postedAt) !== "in");
-  s.queue.sort((a, b) => Number(b.home) - Number(a.home) || (levelFit(b.title, s.plan) ?? 0) - (levelFit(a.title, s.plan) ?? 0) || outside(a) - outside(b) || (b.postedAt ?? "").localeCompare(a.postedAt ?? ""));
+  s.queue.sort((a, b) => b.place - a.place || (levelFit(b.title, s.plan) ?? 0) - (levelFit(a.title, s.plan) ?? 0) || outside(a) - outside(b) || (b.postedAt ?? "").localeCompare(a.postedAt ?? ""));
 }
 
 /**
@@ -431,25 +435,25 @@ export function admit(s: Search, job: RawJob, { requirePlace = false, roleChecke
   if (where === "unknown" && requirePlace) return reject("location not stated");
   const issue = jobFitIssue(job, s.plan, { roleChecked });
   if (issue) return reject(issue);
-  const home = where !== "remote";
+  const place = placeRank(where);
   const requested = searchDays(s.plan);
   switch (ageOf(s, job.postedAt)) {
     case "old":
       return reject("too old");
     case "held":
-      s.nearMissJobs.push({ ...job, home });
+      s.nearMissJobs.push({ ...job, place });
       return null;
     case "widened":
-      return { ...job, home, ...(requested && { outsideWindowDays: requested }) };
+      return { ...job, place, ...(requested && { outsideWindowDays: requested }) };
     default:
-      return { ...job, home };
+      return { ...job, place };
   }
 }
 
-/** Adds admitted postings to the pool: in-state first, never a posting that's already there. Returns how many were new. */
+/** Adds admitted postings to the pool: nearest first, never a posting that's already there. Returns how many were new. */
 export function load(s: Search, candidates: Candidate[]): number {
-  candidates.sort((a, b) => Number(b.home) - Number(a.home));
-  const { jobs } = normalizeJobs(candidates.map(({ home: _home, ...job }) => job));
+  candidates.sort((a, b) => b.place - a.place);
+  const { jobs } = normalizeJobs(candidates.map(({ place: _place, ...job }) => job));
   const existing = s.started && currentJobs().source === "harness" ? currentJobs().jobs : [];
   const existingKeys = new Set(existing.map(postingKey));
   // Also one per key within the batch: employers often post identical requisitions ("Software Engineer", same city).

@@ -1,87 +1,103 @@
-// Where to look, in order, and which postings each place accepts.
-//   The requested city → nearby cities → the rest of the state → remote (anywhere in the US).
-// Outside the home state only remote postings count, and in-state postings always come first.
+// Where to look, in order, and which postings each place accepts. Works for any US city or state (places.ts).
+//
+//   near    within a commuting radius of the requested city (50 miles unless the request says otherwise), in any
+//           state: Jersey City counts for New York, and Gary, Indiana for Chicago
+//   state   elsewhere in the same state (a wider net, after the radius)
+//   remote  US-remote postings, from anywhere
+//   no      onsite somewhere else, or remote but tied to another country
+//
+// Search order for boards like Indeed: the city → the largest cities within the radius → the state → remote.
 
-import { METROS, STATES, type SearchPlan } from "./intent";
+import { type SearchPlan } from "./intent";
+import { locate, miles, nearbyCities, resolveHome, STATE_NAMES, type Home } from "./places";
+
+/** A commute, not a relocation. Requests can override it ("within 25 miles"). */
+export const DEFAULT_RADIUS_MILES = 50;
 
 export interface SearchArea {
   /** Shown to the user and passed back with results. */
   label: string;
   /** What to type into a job board's location box: "Chicago, IL", "Illinois", "remote". */
   query: string;
-  /** Out-of-state areas: only remote postings are accepted. */
+  /** Remote-only areas accept only remote postings. */
   remoteOnly: boolean;
 }
 
-/** Cities that anchor each metro's nearby-city stage: spread out, so each board search covers new ground. */
-const NEARBY: Record<string, string[]> = {
-  chicago: ["Naperville", "Schaumburg", "Evanston", "Oak Brook", "Deerfield", "Joliet"],
-  "new york": ["Jersey City", "Newark", "Stamford", "White Plains"],
-  "san francisco": ["San Jose", "Oakland", "Palo Alto", "Mountain View"],
-  seattle: ["Bellevue", "Redmond", "Tacoma"],
-  boston: ["Cambridge", "Waltham", "Burlington"],
-  austin: ["Round Rock", "San Marcos", "Georgetown"],
-};
+export type Placement = "near" | "state" | "remote" | "unknown" | "no";
 
-const CITY_STATES: Record<string, string> = {
-  chicago: "illinois", evanston: "illinois", naperville: "illinois", schaumburg: "illinois", "new york": "new york",
-  boston: "massachusetts", seattle: "washington", austin: "texas", dallas: "texas", houston: "texas",
-  "san francisco": "california", "los angeles": "california", "san jose": "california", denver: "colorado",
-  atlanta: "georgia", miami: "florida", detroit: "michigan", minneapolis: "minnesota", phoenix: "arizona",
-  philadelphia: "pennsylvania", columbus: "ohio", indianapolis: "indiana", milwaukee: "wisconsin", "st. louis": "missouri",
-};
+/** Best first, for sorting: near, then the rest of the state, then remote, then unknown. */
+export const placeRank = (p: Placement): number => ({ near: 3, state: 2, remote: 1, unknown: 0, no: -1 })[p];
 
-const title = (s: string) => s.replace(/\b\w/g, (x) => x.toUpperCase());
+export const radiusOf = (plan: Pick<SearchPlan, "radiusMiles">) => plan.radiusMiles ?? DEFAULT_RADIUS_MILES;
 
-/** The home state implied by the plan's first location, or null when the plan has no place (or a remote-only plan). */
-export function homeState(plan: Pick<SearchPlan, "locations">): string | null {
-  const first = plan.locations[0]?.toLowerCase().trim();
-  if (!first) return null;
-  const [city = "", region = ""] = first.split(",").map((s) => s.trim());
-  const fromRegion = Object.entries(STATES).find(([name, abbr]) => region === name || region === abbr)?.[0];
-  return fromRegion ?? CITY_STATES[city] ?? (STATES[city] ? city : null);
+export function homeOf(plan: Pick<SearchPlan, "locations">): Home | null {
+  return plan.locations[0] ? resolveHome(plan.locations[0]) : null;
 }
 
+/** The home state's name ("Illinois"), or null when the plan has no place. */
+export function homeState(plan: Pick<SearchPlan, "locations">): string | null {
+  const home = homeOf(plan);
+  if (!home) return null;
+  return STATE_NAMES[home.kind === "point" ? home.place.state : home.state] ?? null;
+}
+
+const remoteArea: SearchArea = { label: "Remote (US)", query: "remote", remoteOnly: true };
+
 export function searchAreas(plan: SearchPlan): SearchArea[] {
-  const state = homeState(plan);
-  const first = plan.locations[0]?.split(",")[0]?.trim().toLowerCase();
-  if (!first) return [{ label: plan.remote ? "Remote" : "Anywhere", query: plan.remote ? "remote" : "United States", remoteOnly: plan.remote }];
-  const abbr = state ? STATES[state]!.toUpperCase() : "";
-  const at = (city: string) => (abbr ? `${title(city)}, ${abbr}` : title(city));
-  const areas: SearchArea[] = [];
-  if (first !== state) areas.push({ label: title(first), query: at(first), remoteOnly: false });
-  if (plan.locationMode !== "strict") {
-    for (const city of NEARBY[first] ?? []) areas.push({ label: `Near ${title(first)}: ${city}`, query: at(city), remoteOnly: false });
-    if (state) areas.push({ label: title(state), query: title(state), remoteOnly: false });
-    areas.push({ label: "Remote (US)", query: "remote", remoteOnly: true });
+  const home = homeOf(plan);
+  if (!plan.locations.length) return [{ label: plan.remote ? "Remote" : "Anywhere", query: plan.remote ? "remote" : "United States", remoteOnly: plan.remote }];
+  const strict = plan.locationMode === "strict";
+  if (!home) {
+    // Not a US place we know: search it as typed, and remote when widening.
+    return [{ label: plan.locations[0]!, query: plan.locations[0]!, remoteOnly: false }, ...(strict && !plan.remote ? [] : [remoteArea])];
+  }
+  if (home.kind === "state") {
+    const name = STATE_NAMES[home.state]!;
+    return [{ label: name, query: name, remoteOnly: false }, ...(strict && !plan.remote ? [] : [remoteArea])];
+  }
+  const { place } = home;
+  const at = (p: { name: string; state: string }) => `${p.name}, ${p.state}`;
+  const areas: SearchArea[] = [{ label: place.name, query: at(place), remoteOnly: false }];
+  if (!strict) {
+    for (const city of nearbyCities(place, radiusOf(plan), 3)) {
+      areas.push({ label: `Near ${place.name}: ${city.name}, ${city.state}`, query: at(city), remoteOnly: false });
+    }
+    if (place.state !== "DC") areas.push({ label: STATE_NAMES[place.state]!, query: STATE_NAMES[place.state]!, remoteOnly: false });
+    areas.push(remoteArea);
   } else if (plan.remote) {
-    areas.push({ label: "Remote (US)", query: "remote", remoteOnly: true });
+    areas.push(remoteArea);
   }
   return areas;
 }
-
-export type Placement = "home" | "remote" | "unknown" | "no";
 
 const REMOTE = /\b(remote|work from home|telecommute|anywhere)\b/i;
 const NOT_REMOTE = /\b(hybrid|on[- ]?site|in[- ]office)\b/i;
 /** Remote postings tied to another country or region ("Argentina Remote", "Remote - EMEA") aren't US-remote. */
 const FOREIGN = /\b(canada|united kingdom|uk|england|india|mexico|germany|philippines|poland|brazil|ireland|australia|argentina|colombia|chile|peru|uruguay|costa rica|spain|portugal|france|netherlands|italy|sweden|romania|ukraine|israel|pakistan|nigeria|kenya|south africa|japan|singapore|china|vietnam|emea|apac|latam|europe)\b/i;
 
-/**
- * Where a posting sits relative to the plan: in the home state or metro ("home"), acceptable only because it's
- * remote ("remote"), not stated ("unknown"), or out of bounds ("no"). Onsite jobs in other states are never accepted.
- */
+/** Where a posting sits relative to the plan (see the top of this file). */
 export function placement(jobLocation: string | null | undefined, plan: SearchPlan): Placement {
   const text = (jobLocation ?? "").trim();
-  const lower = text.toLowerCase();
   if (!text || /^\d+\s+locations?$/i.test(text)) return "unknown";
   const remote = REMOTE.test(text) && !NOT_REMOTE.test(text) && !FOREIGN.test(text);
-  if (!plan.locations.length) return plan.remote ? (remote ? "remote" : "no") : "home";
+  const strict = plan.locationMode === "strict";
+  const remoteOk = remote && (plan.remote || !strict);
+  if (!plan.locations.length) return plan.remote ? (remote ? "remote" : "no") : "near";
 
-  const state = homeState(plan);
-  const metro = new Set([...plan.locations.map((l) => l.toLowerCase().split(",")[0]!.trim()), ...(METROS[plan.locations[0]!.toLowerCase().split(",")[0]!.trim()] ?? [])]);
-  const inMetro = [...metro].some((city) => city && lower.includes(city));
-  const inState = state ? lower.includes(state) || new RegExp(`(^|,|\\s)${STATES[state]}(\\b|$)`, "i").test(text) : false;
-  if (inMetro || inState) return "home";
-  return remote && (plan.remote || plan.locationMode !== "strict") ? "remote" : "no";
+  const home = homeOf(plan);
+  if (!home) {
+    // Somewhere we can't place on a map: fall back to the words themselves.
+    if (text.toLowerCase().includes(plan.locations[0]!.toLowerCase().split(",")[0]!.trim())) return "near";
+    return remoteOk ? "remote" : "no";
+  }
+  const spots = locate(text);
+  const homeStateCode = home.kind === "point" ? home.place.state : home.state;
+  if (home.kind === "state" ? spots.some((s) => s.state === home.state) : spots.some((s) => s.place && miles(s.place, home.place) <= radiusOf(plan))) {
+    return "near";
+  }
+  if (!strict && home.kind === "point" && spots.some((s) => s.state === homeStateCode)) return "state";
+  if (remoteOk) return "remote";
+  // No place in it at all, just a placeholder: the full posting may say more.
+  if (!spots.length && /\b(multiple|various|several|tbd|to be determined|see (?:description|posting))\b/i.test(text)) return "unknown";
+  return "no";
 }

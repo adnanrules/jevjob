@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { levelFit, locationFit, planFromQuery } from "../src/intent";
+import { levelFit, planFromQuery } from "../src/intent";
 
 describe("planFromQuery (the CLI's fallback when no chat model writes the plan)", () => {
   it("splits a level from a role and expands the role into real job titles", () => {
@@ -17,8 +17,8 @@ describe("planFromQuery (the CLI's fallback when no chat model writes the plan)"
     expect(planFromQuery("pharmacy technician")).toMatchObject({ level: "any", titles: ["pharmacy technician"] });
   });
 
-  it("expands a metro into its suburbs", () => {
-    expect(planFromQuery("software engineer", { location: "Chicago" }).locations).toEqual(expect.arrayContaining(["evanston", "schaumburg"]));
+  it("keeps the place as one point; distance decides what's near (geography.ts)", () => {
+    expect(planFromQuery("software engineer", { location: "Chicago" }).locations).toEqual(["chicago"]);
   });
 });
 
@@ -39,21 +39,11 @@ describe("levelFit", () => {
   });
 });
 
-describe("locationFit", () => {
-  const chicago = { locations: ["Chicago", "Northbrook", "Evanston"], remote: false };
-  it("matches any listed city, and treats placeholders as unknown rather than a match", () => {
-    expect(locationFit("Northbrook, IL", chicago)).toBe("match");
-    expect(locationFit("Austin, Texas", chicago)).toBe("no");
-    expect(locationFit("3 Locations", chicago)).toBe("unknown");
-    expect(locationFit("", chicago)).toBe("unknown");
-  });
-
-  it("accepts remote postings only when remote was asked for", () => {
-    expect(locationFit("Remote - United States", { locations: [], remote: true })).toBe("match");
-    expect(locationFit("Remote - United States", chicago)).toBe("no");
-  });
-
-  it("understands a state name as its abbreviation", () => {
-    expect(locationFit("Springfield, IL", { locations: ["Illinois"], remote: false })).toBe("match");
+describe("places in a request", () => {
+  it("keeps the place as typed and reads a radius", () => {
+    expect(planFromQuery("junior software engineer in Raleigh, NC")).toMatchObject({ locations: ["raleigh, nc"] });
+    const within = planFromQuery("junior software engineer within 20 miles of Chicago");
+    expect(within).toMatchObject({ locations: ["chicago"], radiusMiles: 20 });
+    expect(planFromQuery("data analyst in Austin within 30 miles")).toMatchObject({ locations: ["austin"], radiusMiles: 30 });
   });
 });

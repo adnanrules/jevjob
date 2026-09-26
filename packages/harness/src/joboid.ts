@@ -13,7 +13,8 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { promisify } from "node:util";
 import { extractRequirements, normalizeJobs, type RawJob } from "@jevjob/core";
-import { levelFit, locationFit, searchDays, type SearchPlan } from "./intent";
+import { placement } from "./geography";
+import { levelFit, searchDays, type SearchPlan } from "./intent";
 import { currentJobs, loadJobs, type LoadSummary } from "./jobs";
 import { joboidDir, loadEnv, SESSION_FILE } from "./paths";
 
@@ -86,10 +87,10 @@ async function candidatesFor(dir: string, plan: SearchPlan, exclude: Set<string>
   const scored = (found.jobs ?? []).flatMap((j) => {
     if (exclude.has(j.id)) return [];
     const level = levelFit(j.title, plan);
-    const where = locationFit(j.location, plan);
+    const where = placement(j.location, plan);
     if (level === null || where === "no") return [];
     const date = /^\d{4}-\d{2}-\d{2}/.test(j.posted ?? "") ? j.posted! : null;
-    return [{ c: { id: j.id, title: j.title, location: j.location ?? null, posted: date }, level, sure: where === "match" ? 1 : 0 }];
+    return [{ c: { id: j.id, title: j.title, location: j.location ?? null, posted: date }, level, sure: where === "unknown" ? 0 : 1 }];
   });
   // Best fit first: explicit entry-level titles, then known locations, then the freshest.
   scored.sort((a, b) => b.level - a.level || b.sure - a.sure || (b.c.posted ?? "").localeCompare(a.c.posted ?? ""));
@@ -108,7 +109,7 @@ async function collect(dir: string, plan: SearchPlan, exclude: Set<string>, want
     const full = await Promise.all(batch.map((c) => joboid(dir, ["job", c.id]).catch(() => null)));
     examined += batch.length;
     for (const job of normalizeJobs(full.filter(Boolean)).jobs) {
-      if (locationFit(job.location, plan) !== "match") continue; // the full posting settles placeholder locations
+      if (["no", "unknown"].includes(placement(job.location, plan))) continue; // the full posting settles placeholder locations
       if (cutoff && (!job.postedAt || Date.parse(job.postedAt) < cutoff)) continue; // undated can't prove it's recent
       if (plan.level === "entry" && (requiredYears(job) ?? 0) >= MIN_YEARS_FOR_ENTRY) continue;
       if (jobs.length < want) jobs.push(job);

@@ -1,6 +1,6 @@
 // Search plans. In a harness, the chat model writes the plan from plain English ("junior SWE in Chicago, last
-// week"): it knows which titles employers use and which suburbs "Chicago" means. Without a model (the CLI),
-// planFromQuery makes a reasonable plan from keywords. Everything here is pure and unit-tested.
+// week"): it knows which titles employers use. Without a model (the CLI), planFromQuery makes a reasonable plan from
+// keywords. Places are resolved on a map by geography.ts, so any US city or state works. Pure and unit-tested.
 
 export type Level = "entry" | "mid" | "senior" | "any";
 
@@ -11,8 +11,10 @@ export interface SearchPlan {
   /** Job titles as employers write them; a posting matches if its title contains every word of any one. */
   titles: string[];
   level: Level;
-  /** Cities or areas, suburbs included. Empty means anywhere. */
+  /** Where to center the search: a US city ("Chicago", "Raleigh, NC", "NYC") or state. Empty means anywhere. */
   locations: string[];
+  /** How far from that city still counts as near, in miles (default 50). */
+  radiusMiles?: number | undefined;
   /** Also accept remote postings. */
   remote: boolean;
   posted?: PostedWindow | undefined;
@@ -52,17 +54,6 @@ const ALIASES: Record<string, string> = {
   sre: "devops engineer", "site reliability engineer": "devops engineer", "business intelligence analyst": "data analyst",
 };
 
-/** Suburbs and nearby cities people mean when they name a metro. The chat model does this better; this is the CLI fallback. */
-export const METROS: Record<string, string[]> = {
-  chicago: [
-    "chicago", "evanston", "skokie", "oak brook", "oakbrook", "naperville", "schaumburg", "deerfield", "northbrook",
-    "glenview", "rosemont", "itasca", "lincolnshire", "vernon hills", "downers grove", "lake forest", "north chicago",
-    "mettawa", "riverwoods", "elk grove village", "hoffman estates", "arlington heights", "des plaines", "park ridge",
-    "lombard", "wheaton", "aurora", "rolling meadows", "bannockburn", "libertyville", "buffalo grove", "northfield",
-    "oak park", "bolingbrook", "lisle", "warrenville", "waukegan", "mount prospect", "wood dale", "westchester",
-  ],
-};
-
 /** Keyword fallback for the CLI: "junior software engineer" → entry level, software-engineer titles. */
 export function planFromQuery(
   query: string,
@@ -77,6 +68,9 @@ export function planFromQuery(
   q = q.replace(window?.[0] ?? /$^/, " ").replace(/\b(?:last week|this week|today|last 24h|last month|this month)\b/g, " ");
   const remote = opts.remote ?? /\bremote\b/.test(q);
   q = q.replace(/\b(?:(?:or|and|also|including)\s+)?remote(?:\s+(?:too|only))?\b/g, " ");
+  // "within 25 miles of Austin" → radius 25, place Austin; a trailing "within 25 miles" only sets the radius.
+  const radius = q.match(/\bwithin\s+(\d+)\s*(?:mi|miles?)\b(\s+of\b)?/);
+  if (radius) q = q.replace(radius[0], radius[1] && radius[2] ? " in " : " ").replace(/\bin\s+in\b/, "in");
   const locationMatch = q.match(/\b(?:in|near|around)\s+([^;]+)$/);
   const place = (opts.location ?? locationMatch?.[1])?.replace(/[,\s]+$/g, "").trim().toLowerCase();
   if (locationMatch) q = q.slice(0, locationMatch.index);
@@ -96,7 +90,8 @@ export function planFromQuery(
   return validatePlan({
     titles: ROLE_TITLES[canonical] ?? [role],
     level,
-    locations: place ? (opts.locationMode === "strict" ? [place] : METROS[place.replace(/,.*$/, "")] ?? [place]) : [],
+    locations: place ? [place] : [],
+    ...(radius && { radiusMiles: Number(radius[1]) }),
     remote,
     posted: opts.posted,
     days: opts.days ?? (opts.posted ? undefined : impliedDays),
@@ -116,6 +111,7 @@ export function validatePlan(plan: SearchPlan): SearchPlan {
   if (plan.posted && !Object.hasOwn(POSTED_WINDOWS, plan.posted)) throw new Error("Invalid posted window.");
   if (!["entry", "mid", "senior", "any"].includes(plan.level)) throw new Error("Invalid level.");
   if (plan.sources && !["recommended", "employers", "any"].includes(plan.sources)) throw new Error("sources must be recommended, employers, or any.");
+  if (plan.radiusMiles !== undefined && !(plan.radiusMiles > 0 && plan.radiusMiles <= 500)) throw new Error("radiusMiles must be between 1 and 500.");
   return plan;
 }
 
@@ -145,30 +141,4 @@ export function levelFit(title: string, plan: Pick<SearchPlan, "level" | "intern
     default:
       return 1;
   }
-}
-
-export const STATES: Record<string, string> = {
-  alabama: "al", alaska: "ak", arizona: "az", arkansas: "ar", california: "ca", colorado: "co", connecticut: "ct", delaware: "de",
-  florida: "fl", georgia: "ga", hawaii: "hi", idaho: "id", illinois: "il", indiana: "in", iowa: "ia", kansas: "ks", kentucky: "ky",
-  louisiana: "la", maine: "me", maryland: "md", massachusetts: "ma", michigan: "mi", minnesota: "mn", mississippi: "ms",
-  missouri: "mo", montana: "mt", nebraska: "ne", nevada: "nv", "new hampshire": "nh", "new jersey": "nj", "new mexico": "nm",
-  "new york": "ny", "north carolina": "nc", "north dakota": "nd", ohio: "oh", oklahoma: "ok", oregon: "or", pennsylvania: "pa",
-  "rhode island": "ri", "south carolina": "sc", "south dakota": "sd", tennessee: "tn", texas: "tx", utah: "ut", vermont: "vt",
-  virginia: "va", washington: "wa", "west virginia": "wv", wisconsin: "wi", wyoming: "wy",
-};
-
-export type LocationFit = "match" | "unknown" | "no";
-
-/** Does a posting's location satisfy the plan? "unknown" when the text doesn't say (placeholders, blank). */
-export function locationFit(jobLocation: string | null | undefined, plan: Pick<SearchPlan, "locations" | "remote">): LocationFit {
-  const text = (jobLocation ?? "").toLowerCase();
-  if (!text.trim() || /^\s*\d+\s+locations?\s*$/.test(text)) return "unknown";
-  if (plan.remote && /\b(remote|anywhere|work from home|virtual)\b/.test(text)) return "match";
-  if (plan.locations.length === 0) return plan.remote ? "no" : "match";
-  const hit = plan.locations.some((place) => {
-    const p = place.toLowerCase().replace(/,.*$/, "").trim();
-    const state = STATES[p];
-    return text.includes(p) || (state !== undefined && new RegExp(`,\\s*${state}\\b`).test(text));
-  });
-  return hit ? "match" : "no";
 }

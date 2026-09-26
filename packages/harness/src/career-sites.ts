@@ -9,7 +9,7 @@
 //   3. Fetch full postings best-first and put each through the same checks as Indeed postings (admit).
 //      In-window first; near misses are fetched only when the in-window ones can't fill the batch.
 import { normalizeJobs } from "@jevjob/core";
-import { placement } from "./geography";
+import { placement, placeRank } from "./geography";
 import { admit, ageOf, jobsSummary, load, nextStep, readSearch, saveSearch, settle, skip, widenSteps, type JobsSummary, type Search } from "./indeed";
 import { levelFit, searchDays, titleFit } from "./intent";
 import { joboid } from "./joboid";
@@ -60,12 +60,12 @@ function candidates(s: Search, listings: Listing[]): Listing[] {
     if (!posted && searchDays(s.plan)) return [];
     const age = ageOf(s, posted);
     if (age === "old") return [];
-    return [{ l, inWindow: age === "in" ? 1 : 0, place: where === "home" ? 2 : where === "remote" ? 1 : 0, level, posted: posted ?? "" }];
+    return [{ l, inWindow: age === "in" ? 1 : 0, place: placeRank(where), level, posted: posted ?? "" }];
   });
   scored.sort((a, b) => b.inWindow - a.inWindow || b.place - a.place || b.level - a.level || b.posted.localeCompare(a.posted));
   const unknown = new Map<string, number>();
   return scored.flatMap((x) => {
-    if (x.place > 0) return [x.l];
+    if (x.place > 0) return [x.l]; // known place; unknown ones are capped per employer
     const n = (unknown.get(x.l.company) ?? 0) + 1;
     unknown.set(x.l.company, n);
     return n <= UNKNOWN_PER_EMPLOYER ? [x.l] : [];

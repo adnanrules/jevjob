@@ -11,7 +11,7 @@ import { createHash } from "node:crypto";
 import { existsSync, mkdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { normalizeJobs, normalizePosting, type RawJob } from "@jevjob/core";
-import { placement } from "./geography";
+import { placement, placeRank } from "./geography";
 import { admit, ageOf, load, skip, type Search } from "./indeed";
 import { levelFit, titleFit, type SearchPlan } from "./intent";
 import { FEED_CACHE_DIR } from "./paths";
@@ -53,7 +53,7 @@ export function planCategories(plan: SearchPlan): Set<string> {
 }
 
 /**
- * Feed rows worth reading, best first: in the window, then in-state, then newest. Pure, so it's unit-tested.
+ * Feed rows worth reading, best first: in the window, then nearest (near, state, remote), then newest. Pure, so it's unit-tested.
  * A row fits the role if its title matches the plan's titles, or its category is one the plan's titles ask for
  * ("any coding role" plans list many titles; the feed's own category catches the ones worded differently).
  */
@@ -71,9 +71,9 @@ export function feedCandidates(s: Search, listings: FeedListing[]): FeedListing[
     const posted = l.date_posted ? new Date(l.date_posted * 1000).toISOString().slice(0, 10) : undefined;
     const age = ageOf(s, posted);
     if (age === "old") return [];
-    return [{ l, inWindow: age === "in" ? 1 : 0, home: where === "home" ? 1 : 0, posted: l.date_posted ?? 0 }];
+    return [{ l, inWindow: age === "in" ? 1 : 0, place: placeRank(where), posted: l.date_posted ?? 0 }];
   });
-  scored.sort((a, b) => b.inWindow - a.inWindow || b.home - a.home || b.posted - a.posted);
+  scored.sort((a, b) => b.inWindow - a.inWindow || b.place - a.place || b.posted - a.posted);
   return scored.map((x) => x.l);
 }
 

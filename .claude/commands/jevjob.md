@@ -22,5 +22,6 @@ Use the `jevjob` MCP tools. Pass tool outputs through verbatim; never summarize,
 6. **Open** with `open_app`. Reply in two lines: how many postings loaded (in-state vs remote, and if `widenedTo` is
    set, how many are outside the requested window), the main skip reasons, and that `/jevjob more` gets the next 50.
 
-Locations widen automatically: the city, nearby cities, the rest of the state, then remote only. Postings in other
-states are accepted only when they're remote. At most 50 postings per batch.
+Locations work for any US city or state. Within about 50 miles of the city counts as near, even across a
+state line (Jersey City for NYC); then the rest of the state; then remote US. Onsite jobs elsewhere are skipped. At most 50
+postings per batch.

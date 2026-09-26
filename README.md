@@ -149,9 +149,9 @@ launch takes about half a minute. **Drop your resume** in (PDF, DOCX, TXT or Mar
 - **View** opens the full posting; **Apply ↗** goes to the employer's own page.
 - **Ask for more:** "JevJob, 50 more" continues the same search without repeats.
 - **Fit map** plots every posting by how well you fit and how recently it was posted.
-- **Searches widen on their own:** the city, then nearby cities, then the rest of the state, then remote. Postings
-  in other states count only if they're remote. If a "posted within" window is too short, it widens step by step,
-  and those postings are tagged (*"19d · outside 7d"*).
+- **Any US city or state.** Within about 50 miles counts as near, across state lines (a Jersey City job counts for
+  NYC); then the rest of your state; then remote. Say "within 25 miles" to tighten it. If a "posted within" window
+  is too short, it widens step by step, and those postings are tagged (*"19d · outside 7d"*).
 
 **Privacy:** the app runs on your computer. Your resume goes only to the Jev API (with your key) to classify
 requirements. Postings are read from the employers' sites. Results are cached locally in `.jevjob/`.
@@ -223,6 +223,7 @@ apps/web          Next.js app: streamed ranking, board, fit map, resume-vs-posti
 ## Credits
 
 - [Jev](https://docs.typesafe.ai) by TypeSafe AI does the classification.
+- Place data (every US city, town and township, with coordinates) is from the US Census Bureau (public domain).
 - Entry-level searches use the community-maintained
   [SimplifyJobs/New-Grad-Positions](https://github.com/SimplifyJobs/New-Grad-Positions) list. JevJob reads it at run
   time and never copies it into this repo.

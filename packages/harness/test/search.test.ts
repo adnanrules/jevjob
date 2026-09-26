@@ -4,6 +4,7 @@ import path from "node:path";
 import { beforeAll, describe, expect, it } from "vitest";
 import type { RawJob } from "@jevjob/core";
 import { placement, searchAreas } from "../src/geography";
+import { locate, resolveHome } from "../src/places";
 import { planFromQuery } from "../src/intent";
 import { plainText } from "../src/posting";
 import { entryExperienceIssue, sourceIssue } from "../src/search-quality";
@@ -33,32 +34,78 @@ describe("plain-language requests", () => {
   });
 });
 
-describe("geography: widen from the city, but other states only if remote", () => {
-  const chicago = planFromQuery("junior software engineer in Chicago");
-
-  it("searches the city, nearby cities, the state, then remote, in that order", () => {
-    const areas = searchAreas(chicago).map((a) => a.query);
-    expect(areas[0]).toBe("Chicago, IL");
-    expect(areas).toContain("Naperville, IL");
-    expect(areas.indexOf("Illinois")).toBeGreaterThan(areas.indexOf("Naperville, IL"));
-    expect(areas.at(-1)).toBe("remote");
+describe("places: any US city or state, and messy posting locations", () => {
+  it.each([
+    ["US-IL-Chicago", ["Chicago, IL"]],
+    ["USA - California - San Jose", ["San Jose, CA"]],
+    ["Chicago, Illinois, United States of America", ["Chicago, IL"]],
+    ["Albany, New York", ["Albany, NY"]], // New York is the state here, not a second city
+    ["New York, NY 10001", ["New York, NY"]],
+    ["Portland, OR", ["Portland, OR"]],
+    ["Hoboken, NJ; Remote", ["Hoboken, NJ"]],
+    ["Amsterdam; Chicago", ["Chicago, IL"]], // no state, but a big city is unambiguous
+    ["Edison, NJ", ["Edison, NJ"]], // a township, not a Census "place"
+  ])("%s", (text, expected) => {
+    expect(locate(text).filter((s) => s.place).map((s) => `${s.place!.name}, ${s.place!.state}`)).toEqual(expected);
   });
 
-  it("accepts in-state onsite jobs, other states only when remote", () => {
-    expect(placement("Peoria, IL", chicago)).toBe("home");
-    expect(placement("Northbrook, IL", chicago)).toBe("home");
+  it("resolves what people type into a point or a state", () => {
+    expect(resolveHome("NYC")).toMatchObject({ kind: "point", place: { name: "New York", state: "NY" } });
+    expect(resolveHome("Raleigh, NC")).toMatchObject({ kind: "point", place: { name: "Raleigh", state: "NC" } });
+    expect(resolveHome("the Bay Area")).toMatchObject({ kind: "point", place: { name: "San Francisco" } });
+    expect(resolveHome("Texas")).toEqual({ kind: "state", state: "TX" });
+    expect(resolveHome("Nowhereville")).toBeNull();
+  });
+});
+
+describe("geography: near by distance (across state lines), then the state, then remote", () => {
+  const nyc = planFromQuery("junior software engineer in NYC");
+  const chicago = planFromQuery("junior software engineer in Chicago");
+
+  it("counts the commuting area in any state as near", () => {
+    expect(placement("Jersey City, NJ", nyc)).toBe("near");
+    expect(placement("Stamford, CT", nyc)).toBe("near");
+    expect(placement("Brooklyn, NY", nyc)).toBe("near");
+    expect(placement("Gary, IN", chicago)).toBe("near");
+    expect(placement("Northbrook, IL", chicago)).toBe("near");
+    expect(placement("Durham, NC", planFromQuery("software engineer in Raleigh, NC"))).toBe("near");
+  });
+
+  it("the rest of the state comes next; other states only when remote", () => {
+    expect(placement("Buffalo, NY", nyc)).toBe("state");
+    expect(placement("Peoria, IL", chicago)).toBe("state");
     expect(placement("Austin, TX", chicago)).toBe("no");
     expect(placement("Remote - United States", chicago)).toBe("remote");
     expect(placement("Hybrid remote in Austin, TX", chicago)).toBe("no");
     expect(placement("Remote - India", chicago)).toBe("no");
     expect(placement("Argentina Remote", chicago)).toBe("no");
-    expect(placement("Remote - EMEA", chicago)).toBe("no");
+    expect(placement("London, England", chicago)).toBe("no");
+    expect(placement("3 Locations", chicago)).toBe("unknown");
+    expect(placement("Multiple Locations", chicago)).toBe("unknown");
+  });
+
+  it("a whole state, and a custom radius", () => {
+    const texas = planFromQuery("data analyst in Texas");
+    expect(placement("Houston, TX", texas)).toBe("near");
+    expect(placement("Tulsa, OK", texas)).toBe("no");
+    const tight = planFromQuery("software engineer within 20 miles of Chicago");
+    expect(placement("Evanston, IL", tight)).toBe("near");
+    expect(placement("Naperville, IL", tight)).toBe("state"); // about 28 miles out
+  });
+
+  it("searches the city, the biggest cities around it, the state, then remote", () => {
+    const areas = searchAreas(nyc).map((a) => a.query);
+    expect(areas[0]).toBe("New York, NY");
+    expect(areas.some((q) => q.endsWith(", NJ"))).toBe(true); // the biggest nearby cities cross state lines
+    expect(areas.at(-2)).toBe("New York");
+    expect(areas.at(-1)).toBe("remote");
   });
 
   it("stays put when asked to", () => {
     const strict = planFromQuery("software engineer in Chicago", { locationMode: "strict" });
     expect(searchAreas(strict).map((a) => a.query)).toEqual(["Chicago, IL"]);
     expect(placement("Remote - United States", strict)).toBe("no");
+    expect(placement("Peoria, IL", strict)).toBe("no");
   });
 });
 

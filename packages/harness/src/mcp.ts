@@ -24,12 +24,12 @@ const WORKFLOW = [
 ].join(" ");
 
 const server = new McpServer(
-  { name: "jevjob", version: "1.0.0" },
+  { name: "jevjob", version: "1.1.0" },
   {
     instructions: [
       "JevJob ranks job postings against a resume, one small typed classification per requirement, and shows them in a web app.",
       WORKFLOW,
-      `At most ${BATCH_SIZE} postings per batch. Locations widen from the city to nearby cities, the rest of the state, then remote`,
+      `At most ${BATCH_SIZE} postings per batch. Any US city or state: within 50 miles (any state) counts as near, then the rest of the state, then remote`,
       "only: postings in other states are accepted only if remote. Never claim a probability of being hired.",
     ].join(" "),
   },
@@ -62,7 +62,8 @@ server.registerTool(
       request: z.string().min(2).optional().describe("The user's words, e.g. 'junior software engineer in Chicago, last 7 days'"),
       titles: z.array(z.string().min(2)).min(1).max(12).optional(),
       level: z.enum(["entry", "mid", "senior", "any"]).optional(),
-      location: z.string().optional().describe("Starting city or state; empty for anywhere"),
+      location: z.string().optional().describe("Any US city or state: 'Chicago', 'Raleigh, NC', 'NYC', 'Texas'; empty for anywhere"),
+      radius_miles: z.number().positive().max(500).optional().describe("How far from the city still counts as near (default 50)"),
       remote: z.boolean().optional().describe("The user asked for remote jobs"),
       days: z.number().positive().max(365).optional(),
       count: z.number().int().min(1).max(BATCH_SIZE).optional(),
@@ -84,6 +85,7 @@ server.registerTool(
         ...(input.days !== undefined && { days: input.days, posted: undefined }),
         count: Math.min(input.count ?? base.count ?? BATCH_SIZE, BATCH_SIZE),
         ...(input.strict_location !== undefined && { locationMode: input.strict_location ? "strict" : "expand" }),
+        ...(input.radius_miles !== undefined && { radiusMiles: input.radius_miles }),
       });
       const joboid = joboidDir();
       if (joboid) refreshInBackground(joboid); // ready by the time Indeed is used up and career sites are searched

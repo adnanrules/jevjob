@@ -22,9 +22,21 @@ web search to read individual postings and pass their full text to `add_jobs` as
 
 ## Where it looks
 
-The requested city first, then nearby cities (for Chicago: Naperville, Schaumburg, Evanston, Oak Brook, Deerfield,
-Joliet), then the rest of the state, then **remote only**. A posting in another state is accepted only when it's
-remote, and in-state postings always come first. Say "only in Chicago" (`strict_location`) to stop the widening.
+Any US city or state, by distance, with no hand-made lists. `places.ts` resolves the request ("NYC", "Raleigh, NC",
+"the Bay Area", "Texas") on a table of every US city, town and township from the Census Bureau
+(`packages/harness/data/us-places.tsv.gz`, rebuilt by `npm run build:places`), and reads each posting's location
+("US-IL-Chicago", "Chicago, Illinois, United States", "Hoboken, NJ; Remote") onto the same map. Then:
+
+| Placement | Meaning | Order |
+|---|---|---|
+| near | within 50 miles of the city, **in any state** (Jersey City for NYC, Gary for Chicago); "within 25 miles" changes it | first |
+| state | elsewhere in the same state | second |
+| remote | US-remote, from anywhere | third |
+| no | onsite somewhere else, or remote tied to another country | skipped |
+
+Indeed searches follow the same order: the city, the three largest cities within the radius (found on the map, 12+
+miles apart so each search covers new ground), the state, then remote. Say "only in Chicago" (`strict_location`) to
+stay within the radius.
 
 ## When the search runs short
 

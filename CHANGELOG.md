@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.1.0
+
+- **Any US city or state.** "Near you" is now measured by distance on a map of every US city, town and township
+  (US Census Bureau data) instead of hand-made suburb lists. Within 50 miles counts as near, across state lines
+  (Jersey City for NYC, Gary for Chicago); "within 25 miles" changes the radius. Then the rest of the state, then
+  remote. Indeed's nearby searches use the largest cities within the radius. Posting locations are read in any common
+  format ("US-IL-Chicago", "Chicago, Illinois, United States", "Hoboken, NJ; Remote").
+- **README** with screenshots and step-by-step setup for Claude Desktop and Codex.
+
 ## 1.0.0
 
 First public release.
