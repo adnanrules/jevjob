@@ -13,7 +13,7 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { promisify } from "node:util";
 import { extractRequirements, normalizeJobs, type RawJob } from "@jevjob/core";
-import { levelFit, locationFit, POSTED_WINDOWS, type SearchPlan } from "./intent";
+import { levelFit, locationFit, searchDays, type SearchPlan } from "./intent";
 import { currentJobs, loadJobs, type LoadSummary } from "./jobs";
 import { joboidDir, loadEnv, SESSION_FILE } from "./paths";
 
@@ -67,7 +67,7 @@ function requiredYears(job: RawJob): number | null {
 }
 
 async function candidatesFor(dir: string, plan: SearchPlan, exclude: Set<string>): Promise<Candidate[]> {
-  const days = plan.posted ? POSTED_WINDOWS[plan.posted] : undefined;
+  const days = searchDays(plan);
   const args = ["search", "--title", plan.titles.join("|"), "--limit", "5000"];
   if (days) args.push("--days", String(days));
   const found = (await joboid(dir, args)) as { jobs?: Array<{ id: string; title: string; location?: string; posted?: string }> };
@@ -86,7 +86,7 @@ async function candidatesFor(dir: string, plan: SearchPlan, exclude: Set<string>
 }
 
 async function collect(dir: string, plan: SearchPlan, exclude: Set<string>, want: number) {
-  const days = plan.posted ? POSTED_WINDOWS[plan.posted] : undefined;
+  const days = searchDays(plan);
   const cutoff = days ? Date.now() - days * 86_400_000 : null;
   const candidates = await candidatesFor(dir, plan, exclude);
 
@@ -109,7 +109,7 @@ async function collect(dir: string, plan: SearchPlan, exclude: Set<string>, want
 async function discover(dir: string, plan: SearchPlan): Promise<string[]> {
   const where = plan.locations[0] ?? (plan.remote ? "remote" : "");
   const level = plan.level === "entry" ? "entry level" : plan.level === "senior" ? "senior" : "";
-  const days = plan.posted ? POSTED_WINDOWS[plan.posted] : 30;
+  const days = searchDays(plan) ?? 30;
   const added = new Set<string>();
   for (const title of plan.titles.slice(0, 2)) {
     const result = (await joboid(dir, ["discover", `${level} ${title} ${where}`.trim(), "--num", "30", "--days", String(Math.max(days, 7))]).catch(

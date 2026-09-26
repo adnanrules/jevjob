@@ -49,7 +49,7 @@ export function Landing({ setup, onRun, error: runError, onDragChange }: {
       <h1 className="headline">Where should you apply?</h1>
       <p className="subline">
         {setup ? (
-          <><b>{count}</b> {setup.source === "harness" ? "open roles loaded" : "sample roles (fictional)"}, ranked against your resume.</>
+          <><b>{count}</b> {setup.source === "harness" ? "job listings loaded" : "sample roles (fictional)"}, ranked against your resume.</>
         ) : " "}
       </p>
 

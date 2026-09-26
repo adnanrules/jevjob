@@ -136,7 +136,7 @@ export function Detail({ r, tab, onTab, onClose }: {
         })}
 
         <div className="d-foot">
-          <a className="btn" href={r.job.applyUrl} target="_blank" rel="noopener noreferrer">Apply on {r.job.company}&rsquo;s site ↗</a>
+          <a className="btn" href={r.job.applyUrl} target="_blank" rel="noopener noreferrer">View job and apply ↗</a>
         </div>
         <p className="d-note">Percentages are Jev&rsquo;s confidence in each verdict, not a chance of being hired.</p>
         </div>

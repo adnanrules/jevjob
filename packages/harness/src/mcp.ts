@@ -6,14 +6,16 @@ import { readFileSync } from "node:fs";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { z } from "zod";
-import { clearJobs, currentJobs, findJobs, jevAvailable, joboidDir, loadJobs, moreJobs, openApp, rankResume, APP_URL } from "./index";
+import { clearJobs, currentJobs, exaAvailable, findJobs, jevAvailable, joboidDir, loadJobs, moreJobs, openApp, rankResume, APP_URL } from "./index";
+import { requestPlan, searchInput } from "./search-request";
 
 const server = new McpServer(
   { name: "jevjob", version: "0.2.0" },
   {
     instructions: [
       "JevJob ranks job postings against a resume, one small typed classification per requirement.",
-      "To search: turn the user's words into a plan and call find_jobs. Don't ask them for parameters; infer them.",
+      "To search: call find_jobs with the user's query or a structured plan. Public Exa search is the default, not a saved company list.",
+      "Locations widen progressively when results are thin. Report areasSearched and matchesByArea; strict mode keeps requested geography. US-wide expansion is remote only.",
       "Then call open_app. For 'more' / 'different jobs', call more_jobs. Never read or rank the postings yourself.",
       "Never claim a probability of being hired; tiers reflect requirement coverage.",
     ].join(" "),
@@ -27,7 +29,7 @@ server.registerTool(
   { title: "JevJob status", description: "Where the job pool comes from, how many postings it has, and whether Jev is configured." },
   async () => {
     const { source, jobs } = currentJobs();
-    return json({ source, jobs: jobs.length, jev: jevAvailable(), joboid: Boolean(joboidDir()), app: APP_URL });
+    return json({ source, jobs: jobs.length, jev: jevAvailable(), exa: exaAvailable(), defaultSearchProvider: "exa", joboid: Boolean(joboidDir()), app: APP_URL });
   },
 );
 
@@ -36,37 +38,29 @@ server.registerTool(
   {
     title: "Find job postings",
     description: [
-      "Find live postings on company career sites for a search plan you write from the user's request, and load them.",
-      "Infer everything; don't ask. Titles: 4-12 titles employers actually use for the role (for 'junior software",
-      "engineer': software engineer, software developer, associate software engineer, application developer, full stack",
-      "engineer, backend engineer…). Level: entry for junior/new grad/entry level/associate, senior for senior/staff/lead,",
-      "else any. Locations: for a city, include its metro's suburbs and nearby cities (Chicago → Evanston, Skokie,",
-      "Schaumburg, Naperville, Oak Brook, Deerfield, Northbrook, Rosemont…); empty for anywhere. Remote: true if they want",
-      "remote too. Posted: only if they gave a time window. Count: their number, else 50.",
-      "A new search replaces the pool (keep=false); use keep=true to add a second plan (e.g. 'Chicago or remote in the",
-      "midwest' is one plan for Chicago and one remote plan). When results are thin, JevJob discovers more companies.",
+      "Search public job boards and employer listings via Exa, extract individual postings, and load matches.",
+      "Pass query for a plain-language request or titles plus filters. Explicit filters override the query.",
+      "Chicago expands to city, metro, Illinois, surrounding states, then US remote only, until count is reached.",
+      "Use location_mode=strict for no widening. Date limits require the posting's own date, not an index timestamp.",
+      "A successful new search replaces the pool; keep=true adds a plan. Empty/error searches preserve the existing pool.",
+      "Report warnings and skipped reasons. Search is bounded; limited results do not prove no other jobs exist.",
     ].join(" "),
-    inputSchema: {
-      titles: z.array(z.string().min(2)).min(1).max(20).describe("Job titles as employers write them"),
-      level: z.enum(["entry", "mid", "senior", "any"]).default("any"),
-      locations: z.array(z.string()).max(60).default([]).describe("Cities/areas incl. suburbs; empty = anywhere"),
-      remote: z.boolean().default(false).describe("Also accept remote postings"),
-      posted: z.enum(["24h", "7d", "30d", "3month"]).optional().describe("Only postings that went up within this window"),
-      count: z.number().int().min(1).max(200).default(50),
-      internships: z.boolean().default(false),
-      keep: z.boolean().default(false).describe("Add to the current pool instead of starting a new search"),
-    },
+    inputSchema: searchInput,
   },
-  async ({ keep, ...plan }) => json(await findJobs(plan, { keep })),
+  async (input) => {
+    try { return json(await findJobs(requestPlan(input), { keep: input.keep, provider: input.provider, maxQueries: input.max_queries })); }
+    catch (err) { return { isError: true, content: [{ type: "text" as const, text: err instanceof Error ? err.message : "Search failed." }] }; }
+  },
 );
 
 server.registerTool(
   "more_jobs",
   {
     title: "More postings, same search",
-    description: "Rerun the current search plans exactly, and replace the pool with postings the user hasn't seen yet. Reports `exhausted` when there are none left.",
+    description: "Continue saved filters with additional title/location queries; load unseen postings. An empty batch preserves the pool. Public-web search never claims global exhaustion.",
+    inputSchema: { max_queries: z.number().int().min(1).max(6).default(5) },
   },
-  async () => json(await moreJobs()),
+  async ({ max_queries }) => json(await moreJobs({ maxQueries: max_queries })),
 );
 
 server.registerTool(
@@ -74,7 +68,7 @@ server.registerTool(
   {
     title: "Load postings you found yourself",
     description:
-      "Only for postings from somewhere other than find_jobs (e.g. a link the user pasted). Each needs id, company, title, the full description, and applyUrl on the employer's own site. Closed postings are rejected.",
+      "Only for postings from somewhere other than find_jobs. Each needs id, company, title, the full description, and applyUrl to a public job posting or employer application page. Closed postings are rejected.",
     inputSchema: {
       jobs: z.array(z.record(z.string(), z.unknown())).min(1),
       replace: z.boolean().default(true),
@@ -117,5 +111,11 @@ server.registerTool(
     return json({ cleared: true });
   },
 );
+
+server.registerPrompt("jevjob", {
+  title: "Search jobs with JevJob",
+  description: "Find public job listings from a title, place and optional time window.",
+  argsSchema: { query: z.string().describe("Example: junior software engineer in Chicago, last 7 days") },
+}, ({ query }) => ({ messages: [{ role: "user" as const, content: { type: "text" as const, text: `Use JevJob find_jobs with this query: ${query}\nReport the areas searched, count loaded, and material warnings. Then open_app.` } }] }));
 
 await server.connect(new StdioServerTransport());

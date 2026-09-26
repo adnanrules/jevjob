@@ -16,9 +16,15 @@ export interface SearchPlan {
   /** Also accept remote postings. */
   remote: boolean;
   posted?: PostedWindow | undefined;
+  /** Explicit rolling window, in days. Takes precedence over posted. */
+  days?: number | undefined;
   /** How many postings this plan should load. */
   count: number;
   internships?: boolean | undefined;
+  /** Expand supported US locations in stages; strict never changes the requested geography. */
+  locationMode?: "expand" | "strict" | undefined;
+  /** Default: employer ATS boards plus established job boards, not arbitrary repost sites. */
+  sources?: "recommended" | "employers" | "any" | undefined;
 }
 
 const ENTRY = String.raw`\b(junior|jr\.?|entry[- ]level|entry|new[- ]grad(uate)?|graduate|early[- ]career|associate)\b`;
@@ -60,9 +66,21 @@ export const METROS: Record<string, string[]> = {
 /** Keyword fallback for the CLI: "junior software engineer" → entry level, software-engineer titles. */
 export function planFromQuery(
   query: string,
-  opts: { location?: string | undefined; remote?: boolean | undefined; posted?: PostedWindow | undefined; count?: number | undefined } = {},
+  opts: { location?: string | undefined; remote?: boolean | undefined; posted?: PostedWindow | undefined; days?: number | undefined; count?: number | undefined; locationMode?: "expand" | "strict" | undefined } = {},
 ): SearchPlan {
-  const q = query.toLowerCase();
+  let q = query.toLowerCase().trim().replace(/^\/?jevjob\s+/, "").replace(/^(?:find|search)(?:\s+for|\s+me)?\s+/, "");
+  const countMatch = q.match(/^(\d+)\s+/);
+  if (countMatch) q = q.slice(countMatch[0].length);
+  const window = q.match(/\b(?:posted\s+)?(?:in\s+the\s+)?(?:last|past)\s+(\d+)\s*(days?|weeks?|hours?)\b/);
+  const impliedDays = window ? Number(window[1]) * (/week/.test(window[2]!) ? 7 : /hour/.test(window[2]!) ? 1 / 24 : 1)
+    : /\b(?:last week|this week)\b/.test(q) ? 7 : /\b(?:today|last 24h)\b/.test(q) ? 1 : /\b(?:last month|this month)\b/.test(q) ? 30 : undefined;
+  q = q.replace(window?.[0] ?? /$^/, " ").replace(/\b(?:last week|this week|today|last 24h|last month|this month)\b/g, " ");
+  const remote = opts.remote ?? /\bremote\b/.test(q);
+  q = q.replace(/\b(?:(?:or|and|also|including)\s+)?remote(?:\s+(?:too|only))?\b/g, " ");
+  const locationMatch = q.match(/\b(?:in|near|around)\s+([^;]+)$/);
+  const place = (opts.location ?? locationMatch?.[1])?.replace(/[,\s]+$/g, "").trim().toLowerCase();
+  if (locationMatch) q = q.slice(0, locationMatch.index);
+  q = q.replace(/[,;]+/g, " ").trim();
   const level: Level = new RegExp(ENTRY, "i").test(q) ? "entry" : new RegExp(SENIOR, "i").test(q) ? "senior" : "any";
   const internships = /\bintern(ship)?s?\b/.test(q);
   const role =
@@ -72,22 +90,44 @@ export function planFromQuery(
       .replace(/\b(intern(ship)?s?|jobs?|roles?|positions?)\b/g, " ")
       .replace(/\s+/g, " ")
       .trim()
-      .replace(/s$/, "") || "software engineer";
+      .replace(/(engineer|developer|analyst|scientist|technician|programmer)s$/, "$1");
+  if (!role) throw new Error("Provide a job title, for example: junior software engineer in Chicago, last 7 days.");
   const canonical = ALIASES[role] ?? role;
-  const place = opts.location?.toLowerCase().trim();
-  return {
+  return validatePlan({
     titles: ROLE_TITLES[canonical] ?? [role],
     level,
-    locations: place ? (METROS[place] ?? [place]) : [],
-    remote: Boolean(opts.remote),
+    locations: place ? (opts.locationMode === "strict" ? [place] : METROS[place.replace(/,.*$/, "")] ?? [place]) : [],
+    remote,
     posted: opts.posted,
-    count: opts.count ?? 25,
+    days: opts.days ?? (opts.posted ? undefined : impliedDays),
+    count: opts.count ?? (countMatch ? Number(countMatch[1]) : 25),
     internships,
-  };
+    locationMode: opts.locationMode ?? "expand",
+  });
+}
+
+export const searchDays = (plan: SearchPlan): number | undefined => plan.days ?? (plan.posted ? POSTED_WINDOWS[plan.posted] : undefined);
+
+export function validatePlan(plan: SearchPlan): SearchPlan {
+  if (!plan.titles.length || plan.titles.length > 20 || plan.titles.some((t) => t.trim().length < 2)) throw new Error("Provide 1-20 job titles (at least two characters each).");
+  if (!Number.isInteger(plan.count) || plan.count < 1 || plan.count > 200) throw new Error("count must be an integer from 1 to 200.");
+  const days = searchDays(plan);
+  if (days !== undefined && (!Number.isFinite(days) || days <= 0 || days > 365)) throw new Error("days must be greater than 0 and at most 365.");
+  if (plan.posted && !Object.hasOwn(POSTED_WINDOWS, plan.posted)) throw new Error("Invalid posted window.");
+  if (!["entry", "mid", "senior", "any"].includes(plan.level)) throw new Error("Invalid level.");
+  if (plan.sources && !["recommended", "employers", "any"].includes(plan.sources)) throw new Error("sources must be recommended, employers, or any.");
+  return plan;
+}
+
+/** Search engines return near matches; check the title itself before loading. */
+export function titleFit(title: string, plan: SearchPlan): boolean {
+  const words = (s: string) => s.toLowerCase().replace(/[^a-z0-9+#]+/g, " ").split(/\s+/).filter(Boolean).map((w) => w.replace(/s$/, ""));
+  const actual = new Set(words(title));
+  return plan.titles.some((t) => words(t).every((w) => actual.has(w)));
 }
 
 const SENIOR_TITLE = /\b(senior|sr\.?|staff|principal|lead|manager|director|head|architect|vp|distinguished|fellow|chief)\b/i;
-const LEVEL_NUMBER = /\b(ii|iii|iv|v|2|3|4|5)\b(?!\s*(\+|years))/i;
+const LEVEL_NUMBER = /\b(ii|iii|iv|v|vi|vii|viii|ix|[2-9]|[1-9]\d+)\b(?!\s*(\+|years))/i;
 const ENTRY_TITLE = /\b(junior|jr\.?|entry[- ]level|new[- ]grad|graduate|early[- ]career|associate|apprentice|trainee|level\s*1|i)\b/i;
 const INTERN_TITLE = /\b(intern|internship|co-?op)\b/i;
 
@@ -107,7 +147,7 @@ export function levelFit(title: string, plan: Pick<SearchPlan, "level" | "intern
   }
 }
 
-const STATES: Record<string, string> = {
+export const STATES: Record<string, string> = {
   alabama: "al", alaska: "ak", arizona: "az", arkansas: "ar", california: "ca", colorado: "co", connecticut: "ct", delaware: "de",
   florida: "fl", georgia: "ga", hawaii: "hi", idaho: "id", illinois: "il", indiana: "in", iowa: "ia", kansas: "ks", kentucky: "ky",
   louisiana: "la", maine: "me", maryland: "md", massachusetts: "ma", michigan: "mi", minnesota: "mn", mississippi: "ms",

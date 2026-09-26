@@ -10,7 +10,7 @@ those answers into a tier, and every rank is explained line by line.
 - **Five tiers**, shown as the rank number's color: 🟢 Apply · 🟡 Maybe · 🟠 Stretch · 🔴 Big stretch · 🟥 No.
 - **Every requirement** shown in green (you meet it), yellow (unclear) or red (you don't), next to the resume line that proves it.
 - **An aggressiveness slider** (Conservative ↔ Apply anyway) re-ranks instantly in the browser with zero model calls.
-- **Apply links go to the employer's own careers site**, never an aggregator.
+- **Search public job boards and employer listings with Exa**, without a saved-company allowlist. Links open the source posting so you can verify details and apply.
 - **Never** a "chance of being hired". Percentages are requirement coverage or classifier confidence.
 
 ## Why it's built this way
@@ -56,8 +56,24 @@ npm run web
 Open http://localhost:3100, pick a sample candidate (all fictional) or paste a resume, and run the machine. For
 Jev, copy `.env.example` to `.env` and add a TypeSafe or OpenRouter key. Without one, everything runs on rules.
 
-Real postings, with no LLM involved: `npm run jevjob -- joboid "junior software engineer" --location Chicago`
-pulls live jobs from company career sites via Joboid (a companion job-search tool), then `npm run jevjob -- open`.
+For public job search, set `EXA_API_KEY` in `.env`, then:
+
+```bash
+npm run jevjob -- find "25 junior software engineer jobs in Chicago, last 7 days"
+npm run jevjob -- open
+```
+
+Chicago widens when there are too few matches: city → metro → Illinois → Wisconsin/Indiana/Iowa/Missouri/Kentucky → U.S. remote only. Use `--strict-location` to keep the requested geography. Searches report areas, rejected listings and missing dates.
+
+You can also pass explicit filters, use a bare request string, or call `find_jobs` from an MCP harness:
+
+```bash
+npm run jevjob -- search --title "software engineer" --location Chicago --days 14 --count 25
+npm run jevjob -- "data analyst in Chicago, last week"
+npm run jevjob -- more
+```
+
+The default is Exa public search. Saved-company search remains available explicitly with `--provider joboid` (or the legacy `joboid` command). [Harness setup and search behavior](docs/harness.md).
 
 | Command | |
 |---|---|
@@ -73,6 +89,6 @@ pulls live jobs from company career sites via Joboid (a companion job-search too
 packages/core     domain types, requirement extraction, rules assessor, ranking policy, ingestion (pure, no I/O)
 packages/jev      Jev assessor: typed questions, answer validation (Zod), confidence routing, response cache
 packages/eval     labeled datasets, metrics, report writer, policy sweep
-packages/harness  job pool, Joboid import, CLI and MCP server
+packages/harness  public search, geographic expansion, job pool, CLI and MCP server
 apps/web          Next.js UI: streamed pipeline animation, ranked board, resume-vs-posting detail view
 ```

@@ -38,4 +38,21 @@ describe("jevjob MCP server", () => {
     const result = await client.callTool({ name: "rank", arguments: {} });
     expect(result.isError).toBe(true);
   });
+
+  it("offers query and structured search inputs and rejects a missing request without searching", async () => {
+    const { tools } = await client.listTools();
+    const search = tools.find((tool) => tool.name === "find_jobs")!;
+    expect(search.inputSchema.properties).toHaveProperty("query");
+    expect(search.inputSchema.properties).toHaveProperty("days");
+    expect(search.inputSchema.properties).toHaveProperty("location_mode");
+    const result = await client.callTool({ name: "find_jobs", arguments: {} });
+    expect(result.isError).toBe(true);
+  });
+
+  it("exposes a reusable JevJob request prompt", async () => {
+    const { prompts } = await client.listPrompts();
+    expect(prompts.map((prompt) => prompt.name)).toContain("jevjob");
+    const result = await client.getPrompt({ name: "jevjob", arguments: { query: "junior software engineer in Chicago, last 7 days" } });
+    expect(result.messages[0]?.content).toMatchObject({ type: "text", text: expect.stringContaining("find_jobs") });
+  });
 });
