@@ -1,125 +1,79 @@
-﻿# Using JevJob from a harness
+# Using JevJob from Claude or Codex
 
-JevJob searches public job boards and employer listings with Exa, extracts individual postings, checks filters, and loads the app's job pool. It does not need Joboid or a saved list of companies. Jev grades posting requirements against your resume; the harness coordinates the search.
+JevJob officially supports **Claude (Desktop and Code) and Codex**, the harnesses that ship an Indeed plugin. The
+Indeed plugin lives in the chat app, so JevJob can't call it; the assistant does, and hands JevJob the plugin's raw
+output. JevJob does the rest:
 
-## Search commands
+```
+you ─▶ /jevjob junior swe in Chicago this week
+        │
+        ├─ start_search        JevJob plans: titles, level, and places in widening order
+        ├─ Indeed search_jobs  ─▶ add_search_results   JevJob drops wrong titles/levels/places/dates/duplicates
+        │                                              and answers "fetch these ids"
+        ├─ Indeed get_job_details ─▶ add_jobs          full postings: structure rebuilt, 3+ years (entry level),
+        │                                              in-state first, loaded into the app
+        └─ open_app            the app ranks them with Jev, 50 at a time
+```
 
-Set `EXA_API_KEY` in this repository's `.env` or process environment. Keep keys out of commands, commits and logs.
+The assistant never judges a posting; it passes tool outputs through. If the Indeed plugin isn't installed (or you
+say "not Indeed"), it uses its own web search instead: it reads individual postings, preferring employer career
+sites, and passes their full text to `add_jobs` as `postings`.
+
+## Where it looks
+
+The requested city first, then nearby cities (for Chicago: Naperville, Schaumburg, Evanston, Oak Brook, Deerfield,
+Joliet), then the rest of the state, then **remote only**. A posting in another state is accepted only when it's
+remote, and in-state postings always come first. Say "only in Chicago" (`strict_location`) to stop the widening.
+
+## Tools
+
+| MCP tool | What it does |
+|---|---|
+| `start_search` | Plans a new search from the user's words; returns the searches to run, in order, and `next` |
+| `add_search_results` | One raw Indeed `search_jobs` output; answers which job ids to fetch |
+| `add_jobs` | Raw Indeed `get_job_details` outputs (`indeed_details`), or web-search postings (`postings`) |
+| `more_jobs` | Next 50 with the same search, never repeating a posting |
+| `open_app` | Starts the web app if needed; an open app notices new postings and offers to rank them |
+| `rank` | Compact results in chat, for when you don't want the app |
+| `status` / `clear_jobs` | The current pool and search; forget them |
+
+The server also exposes a `jevjob` prompt, and Joboid's `.claude/commands/jevjob.md` makes `/jevjob` in Claude Code.
+
+## Setup
+
+The server is plain stdio: `node <jevjob>/node_modules/tsx/dist/cli.mjs <jevjob>/packages/harness/src/mcp.ts`.
+Replace `<jevjob>` with this folder's absolute path. Jev uses the key in this folder's `.env`.
+
+**Claude Code**: this repo's [`.mcp.json`](../.mcp.json) registers it when you open the folder. From anywhere else:
 
 ```bash
-npm run jevjob -- find "25 junior software engineer jobs in Chicago, last 7 days"
-npm run jevjob -- search --title "software engineer" --location Chicago --days 14 --count 25
-npm run jevjob -- "data analyst in Chicago, last week"
-npm run jevjob -- find "pharmacy technician" --location "Boston, MA" --days 7 --strict-location
-npm run jevjob -- more
-npm run jevjob -- open
+claude mcp add jevjob -- node <jevjob>/node_modules/tsx/dist/cli.mjs <jevjob>/packages/harness/src/mcp.ts
 ```
 
-`find` and `search` are aliases; a quoted request without a command also searches. Plain requests support job title, seniority, a leading count, `in/near/around <location>`, remote, and windows such as `last 7 days`, `last week`, and `today`. Explicit flags override inferred filters. For complex requests, the harness can write a structured plan.
-
-| Option | Meaning |
-|---|---|
-| `--title` | Job title instead of the request string |
-| `--location` | City or state; `City, ST` helps identify an unknown city |
-| `--days` | Positive rolling age limit, up to 365 days |
-| `--posted` | Alternative: `24h`, `7d`, `30d`, `3month` |
-| `--count` | Requested count, 1–200, default 25; not a promise |
-| `--remote` | Also accept remote jobs in the requested search |
-| `--strict-location` | No geographic expansion |
-| `--max-queries` | Exa request budget, 1–6, default 5 |
-| `--keep` | Add a plan and matches instead of replacing the pool |
-| `--provider joboid` | Explicitly opt into tracked-company search |
-
-`more` continues saved filters with further title/geography variants and excludes previously shown jobs. A successful batch replaces the displayed pool. Empty searches preserve the pool; a new empty search still saves the new filters for `more`. Provider failures preserve the pool and prior session. Switching providers requires a new search without `keep`.
-
-## Location expansion
-
-For Chicago, the default stages are:
-
-1. Chicago.
-2. Chicago metro, including Evanston, Naperville, Schaumburg, and Oak Brook.
-3. Illinois.
-4. Wisconsin, Indiana, Iowa, Missouri, and Kentucky.
-5. United States, **remote only**.
-
-The search stops when it has enough accepted listings or reaches its request budget. Broader stages retain role, seniority and date filters. `areasSearched` and `matchesByArea` disclose where matches came from. Nationwide results require explicit remote and U.S. (or worldwide) eligibility in location metadata; onsite U.S. jobs and unspecified/foreign remote jobs do not pass.
-
-Some other major U.S. cities and state neighbors are mapped in `packages/harness/src/geography.ts`. Unknown cities stay within the requested geography rather than guessing a state; use `City, ST` for state and U.S.-remote expansion. Not every city has a metro map or every state a neighbor map. Explicit lists of unrelated locations stay as supplied. Strict mode disables widening.
-
-## Validation and limits
-
-- The public web is searched without an employer or board-domain allowlist.
-- A single Schema.org `JobPosting` record is preferred. Otherwise, explicit metadata and a full job description in Exa page text are required.
-- Public pages are read anonymously. Authentication walls and blocked pages are not bypassed. Indexed text can be used if public retrieval fails, with a diagnostic.
-- Multi-job pages, incomplete descriptions/employers, known closures, expired postings, mismatched titles/levels, and unverified locations are rejected.
-- Date limits require the posting's own date. An Exa index/publication timestamp does not prove when an employer posted a job. Undated postings are excluded when an age limit is requested.
-- Canonical URLs and exact normalized employer/title/location combinations remove duplicates and mirrors. This can conservatively collapse distinct openings with identical metadata.
-- Entry-level searches reject required experience of three or more years.
-- Listings can still be stale or inaccurate. Source links are retained. No application or account sign-in is performed.
-
-Responses include `examined`, `skipped`, `warnings`, `queries` and geographic diagnostics. `limited=true` means the requested count was not reached within the budget, not that no other jobs exist. Public search never claims global exhaustion (`exhausted` is false).
-
-Exa calls use the configured account and can consume its credits. The default is at most five search requests, each with 10–50 results and bounded text content. No per-result LLM summaries are requested. Slow sites can make a search take several minutes; set the MCP tool timeout to 360 seconds if needed.
-
-## MCP calls
-
-Plain-language `find_jobs`:
-
-```json
-{"query":"25 junior software engineer jobs in Chicago, last 7 days"}
-```
-
-Structured `find_jobs`:
+**Claude Desktop**: add to `claude_desktop_config.json`:
 
 ```json
 {
-  "titles": ["software engineer", "software developer"],
-  "level": "entry",
-  "locations": ["Chicago"],
-  "days": 7,
-  "count": 25,
-  "location_mode": "expand",
-  "max_queries": 5
+  "mcpServers": {
+    "jevjob": {
+      "command": "node",
+      "args": ["<jevjob>/node_modules/tsx/dist/cli.mjs", "<jevjob>/packages/harness/src/mcp.ts"]
+    }
+  }
 }
 ```
 
-Explicit fields override fields inferred from `query`. `location_mode: "strict"` disables widening. `provider` defaults to `exa`; missing/invalid credentials are reported, never silently replaced with tracked-company results.
-
-| Tool | Purpose |
-|---|---|
-| `find_jobs` | Search and load public postings |
-| `more_jobs` | Continue saved filters with additional queries and unseen matches |
-| `load_jobs` | Import full postings obtained elsewhere |
-| `open_app` | Start/open the app; an open app notices changed pools |
-| `rank` | Rank against `resume_text` or `resume_path` |
-| `status` | Pool count, Exa/Jev availability and default provider, without keys |
-| `clear_jobs` | Clear the pool/session and return to fictional demo data |
-
-The server exposes a `jevjob` MCP prompt with a `query` argument. Prompt/slash-command presentation depends on the harness; `/jevjob` is not a universal built-in Codex command. Once connected, ask: **“Use JevJob to find junior software engineer jobs in Chicago from the last 7 days.”**
-
-## Connect a harness
-
-Install dependencies with `npm install`. The stdio command is:
-
-```text
-node <jevjob>/node_modules/tsx/dist/cli.mjs <jevjob>/packages/harness/src/mcp.ts
-```
-
-Use absolute paths. The server locates this repository's `.env` independently of the caller's working directory.
-
-**Codex:** add to `~/.codex/config.toml`:
+**Codex**: add to `~/.codex/config.toml`:
 
 ```toml
 [mcp_servers.jevjob]
 command = "node"
-args = ["C:/Users/adnan/Joboid/projects/jevjob/node_modules/tsx/dist/cli.mjs", "C:/Users/adnan/Joboid/projects/jevjob/packages/harness/src/mcp.ts"]
-tool_timeout_sec = 360
+args = ["<jevjob>/node_modules/tsx/dist/cli.mjs", "<jevjob>/packages/harness/src/mcp.ts"]
 ```
 
-Use your actual checkout path. Restart the MCP connection after configuration/server changes.
+Enable the Indeed plugin in the same app (Claude: Settings → Connectors; Codex: its plugin list).
 
-**Claude Code:** this repository's `.mcp.json` registers the server when opened from this folder. From another folder use the absolute stdio command with `claude mcp add jevjob -- ...`.
+## From a terminal
 
-**Claude Desktop and other MCP clients:** register a stdio server with the same command and absolute arguments. Harnesses without MCP can use the CLI commands above.
-
-References: [Exa search API](https://exa.ai/docs/reference/search), [JobPosting structured data](https://developers.google.com/search/docs/appearance/structured-data/job-posting), [Codex MCP configuration](https://learn.chatgpt.com/docs/extend/mcp?surface=cli).
+A terminal can't reach Indeed, so `npm run jevjob -- find "<request>"` searches the companies Joboid tracks
+instead. `load`, `open`, `rank`, `status` and `clear` work the same as the MCP tools.

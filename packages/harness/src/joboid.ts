@@ -52,7 +52,7 @@ const writeSession = (s: Session) => {
 };
 
 async function joboid(dir: string, args: string[]): Promise<unknown> {
-  // JevJob's .env can hold EXA_API_KEY too; Joboid inherits it from this process's environment.
+  // Joboid inherits this process's environment, including anything set in JevJob's .env.
   loadEnv();
   const { stdout } = await run("uv", ["run", "joboid", ...args], { cwd: dir, maxBuffer: 128 * 1024 * 1024, windowsHide: true });
   return JSON.parse(stdout);
