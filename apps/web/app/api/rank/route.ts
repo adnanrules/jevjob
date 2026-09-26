@@ -1,7 +1,7 @@
 // Streams one event per pipeline step as it really happens, so the UI animates actual progress.
 import { extractRequirements, parseResume, rulesAssessor } from "@jevjob/core";
 import type { RankEvent } from "@/lib/events";
-import { getAssessor, jevAvailable, jevModel, loadJobs, type AssessorName } from "@/lib/server";
+import { getAssessor, jevAvailable, jevModel, loadJobs, poolVersion, type AssessorName } from "@/lib/server";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -19,6 +19,7 @@ export async function POST(request: Request) {
   const wanted: AssessorName = body.assessor === "jev" && jevAvailable() ? "jev" : "rules";
   const assessor = getAssessor(wanted);
   const resume = parseResume(text);
+  const version = poolVersion();
   const { source, jobs } = loadJobs();
 
   const encoder = new TextEncoder();
@@ -30,6 +31,7 @@ export async function POST(request: Request) {
         assessor: wanted,
         model: wanted === "jev" ? jevModel() : null,
         source,
+        poolVersion: version,
         jobs: jobs.map(({ id, company, title, location, applyUrl }) => ({ id, company, title, location, applyUrl })),
       });
 

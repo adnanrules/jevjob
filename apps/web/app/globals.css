@@ -95,6 +95,12 @@ button { font: inherit; color: inherit; cursor: pointer; }
 .samples button { background: none; border: 0; padding: 0; color: var(--muted); border-bottom: 1px solid transparent; transition: color 0.2s, border-color 0.2s; }
 .samples button:hover { color: var(--ink); border-bottom-color: var(--line-2); }
 
+.btn.small { padding: 6px 12px; font-size: 13px; border-radius: 7px; }
+.notice {
+  display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-top: 14px; padding: 10px 10px 10px 16px;
+  border: 1px solid var(--line-2); border-radius: 10px; background: rgba(16, 18, 22, 0.92); font-size: 13.5px; color: var(--ink-2);
+}
+
 /* ── Rail: the pipeline while it runs ────────────────────────────────────── */
 .rail { position: relative; display: grid; grid-template-columns: repeat(4, 1fr); margin-top: 18px; padding-top: 22px; }
 .rail::before { content: ""; position: absolute; left: 4px; right: 4px; top: 4px; height: 1px; background: var(--line-2); }

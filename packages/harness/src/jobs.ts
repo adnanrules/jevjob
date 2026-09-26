@@ -1,8 +1,8 @@
 // The job pool: what a harness loaded, or the fictional demo postings when it hasn't loaded anything.
-import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, rmSync, statSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { dropStale, normalizeJobs, type IngestResult, type RawJob } from "@jevjob/core";
-import { fromRoot, JOBS_FILE } from "./paths";
+import { fromRoot, JOBS_FILE, SESSION_FILE } from "./paths";
 
 export type JobSource = "harness" | "demo";
 
@@ -12,6 +12,11 @@ const readJson = <T>(file: string) => JSON.parse(readFileSync(file, "utf8")) as 
 export function currentJobs(): { source: JobSource; jobs: RawJob[] } {
   if (existsSync(JOBS_FILE)) return { source: "harness", jobs: readJson<RawJob[]>(JOBS_FILE) };
   return { source: "demo", jobs: DEMO_FILES.flatMap((f) => readJson<RawJob[]>(fromRoot(f))) };
+}
+
+/** Changes whenever the pool is replaced or extended, so an open app can notice new postings. */
+export function poolVersion(): string {
+  return existsSync(JOBS_FILE) ? String(statSync(JOBS_FILE).mtimeMs) : "demo";
 }
 
 export interface LoadOptions {
@@ -34,6 +39,9 @@ export interface LoadSummary {
 
 export function loadJobs(input: unknown, { replace = false, maxAgeDays }: LoadOptions = {}): LoadSummary {
   const { jobs: incoming, rejected } = normalizeJobs(input);
+  // A replaced pool no longer comes from the saved Joboid searches, so "more" has nothing to continue.
+  // (importFromJoboid writes a fresh session right after.)
+  if (replace) rmSync(SESSION_FILE, { force: true });
   const existing = replace || !existsSync(JOBS_FILE) ? [] : readJson<RawJob[]>(JOBS_FILE);
   const byId = new Map(existing.map((j) => [j.id, j]));
   let added = 0;
@@ -50,7 +58,8 @@ export function loadJobs(input: unknown, { replace = false, maxAgeDays }: LoadOp
   return { added, updated, total: kept.length, droppedStale: dropped.length, rejected };
 }
 
-/** Forget the harness's postings; the app goes back to the demo pool. */
+/** Forget the harness's postings and search session; the app goes back to the demo pool. */
 export function clearJobs(): void {
   rmSync(JOBS_FILE, { force: true });
+  rmSync(SESSION_FILE, { force: true });
 }

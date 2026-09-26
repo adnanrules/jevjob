@@ -25,7 +25,32 @@ export default function Page() {
   const [filter, setFilter] = useState<Tier | null>(null);
   const [openId, setOpenId] = useState<string | null>(null);
   const [dragging, setDragging] = useState(false);
+  const [lastResume, setLastResume] = useState<string | null>(null);
+  const [pool, setPool] = useState<{ version: string; source: "harness" | "demo"; jobCount: number } | null>(null);
   const { state, start, reset } = useMachine();
+
+  // A harness can load a new pool (/jevjob again, or "more") while the app is open. Poll a tiny endpoint
+  // so the landing count stays current and an open board can offer to re-rank.
+  useEffect(() => {
+    let alive = true;
+    const check = () => {
+      if (document.hidden) return;
+      fetch("/api/pool").then((r) => r.json()).then((p) => alive && setPool(p)).catch(() => {});
+    };
+    check();
+    const timer = window.setInterval(check, 4000);
+    return () => {
+      alive = false;
+      window.clearInterval(timer);
+    };
+  }, []);
+
+  const run = (text: string) => {
+    setLastResume(text);
+    setFilter(null);
+    setOpenId(null);
+    void start(text, engine);
+  };
 
   useEffect(() => {
     if (STILL) document.documentElement.dataset.still = "";
@@ -86,9 +111,17 @@ export default function Page() {
 
         <AnimatePresence mode="wait">
           {idle ? (
-            <Landing key="landing" setup={setup} onRun={(text) => start(text, engine)} error={state.error} onDragChange={setDragging} />
+            <Landing key="landing" setup={setup && pool ? { ...setup, source: pool.source, jobCount: pool.jobCount } : setup} onRun={run} error={state.error} onDragChange={setDragging} />
           ) : (
             <motion.div key="run" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+              <AnimatePresence>
+                {settled && pool && state.poolVersion && pool.version !== state.poolVersion && lastResume && (
+                  <motion.div className="notice" initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
+                    <span>New job pool loaded: {pool.jobCount} {pool.source === "demo" ? "sample roles" : "roles"}</span>
+                    <button className="btn small" onClick={() => run(lastResume)}>Re-rank with this resume</button>
+                  </motion.div>
+                )}
+              </AnimatePresence>
               <LayoutGroup>
                 <AnimatePresence mode="popLayout">
                   {settled ? (

@@ -6,7 +6,7 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { z } from "zod";
 import {
-  clearJobs, currentJobs, importFromJoboid, jevAvailable, joboidDir, loadJobs, openApp, rankResume, APP_URL,
+  clearJobs, currentJobs, importFromJoboid, jevAvailable, joboidDir, loadJobs, moreFromJoboid, openApp, rankResume, APP_URL,
 } from "./index";
 
 const server = new McpServer(
@@ -52,17 +52,29 @@ server.registerTool(
   "import_from_joboid",
   {
     title: "Import postings from Joboid",
-    description: "Search Joboid (live postings from company career sites) and load the matches with full descriptions. Uses no LLM tokens.",
+    description:
+      "Search Joboid (live postings from company career sites) and load the matches with full descriptions. Uses no LLM tokens. " +
+      "A search without keep=true starts a new session and replaces the pool; the open app notices and offers to re-rank.",
     inputSchema: {
       query: z.string().min(1).describe("Keywords, e.g. 'junior software engineer'"),
       location: z.string().optional(),
       remote: z.boolean().optional(),
-      days: z.number().int().positive().optional().describe("Only postings from the last N days"),
-      limit: z.number().int().min(1).max(60).default(20),
-      keep: z.boolean().default(false).describe("Merge into the current pool instead of replacing it"),
+      posted: z.enum(["24h", "7d", "30d", "3month"]).optional().describe("Only postings that went up within this window"),
+      limit: z.number().int().min(1).max(100).default(25).describe("How many postings this search adds"),
+      keep: z.boolean().default(false).describe("Add to the current pool and session (a second search) instead of replacing it"),
     },
   },
   async (args) => json(await importFromJoboid(args)),
+);
+
+server.registerTool(
+  "more_jobs",
+  {
+    title: "More postings, same search",
+    description:
+      "Rerun the current session's Joboid searches with exactly the same parameters, and replace the pool with postings the user hasn't seen yet. Reports `exhausted` when there are no more.",
+  },
+  async () => json(await moreFromJoboid()),
 );
 
 server.registerTool(

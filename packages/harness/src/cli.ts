@@ -1,12 +1,15 @@
 // The same operations as the MCP server, for shells and harnesses without MCP.
 // Run: npm run jevjob -- <command>
 import { readFileSync } from "node:fs";
-import { clearJobs, currentJobs, importFromJoboid, jevAvailable, loadJobs, openApp, rankResume, type Engine } from "./index";
+import {
+  clearJobs, currentJobs, importFromJoboid, jevAvailable, loadJobs, moreFromJoboid, openApp, POSTED_WINDOWS, rankResume, type Engine, type PostedWindow,
+} from "./index";
 
 const HELP = `jevjob <command>
 
-  joboid "<query>" [--location L] [--remote] [--days N] [--limit N] [--keep]
-                          pull fresh postings from Joboid (replaces the pool unless --keep)
+  joboid "<query>" [--location L] [--remote] [--posted 24h|7d|30d|3month] [--limit N] [--keep]
+                          pull fresh postings from Joboid (a new search replaces the pool unless --keep)
+  more                    same searches, same parameters, only postings you haven't seen yet
   load <file.json|->      load postings you found yourself [--keep] [--max-age N]
   open                    start the app and open it in your browser
   rank <resume.md>        rank the pool in the terminal [--engine jev|rules] [--top N] [--json]
@@ -19,7 +22,7 @@ const option = (name: string) => {
   const i = args.indexOf(`--${name}`);
   return i >= 0 ? args[i + 1] : undefined;
 };
-const VALUE_FLAGS = new Set(["location", "days", "limit", "max-age", "engine", "top"]);
+const VALUE_FLAGS = new Set(["location", "posted", "limit", "max-age", "engine", "top"]);
 const positional: string[] = [];
 for (let i = 0; i < args.length; i++) {
   const a = args[i]!;
@@ -34,17 +37,21 @@ async function main() {
   switch (command) {
     case "joboid": {
       if (!target) throw new Error('Usage: jevjob joboid "<query>"');
-      const days = option("days");
+      const posted = option("posted");
+      if (posted && !(posted in POSTED_WINDOWS)) throw new Error(`--posted must be one of: ${Object.keys(POSTED_WINDOWS).join(", ")}`);
       print(await importFromJoboid({
         query: target,
-        ...(option("location") && { location: option("location")! }),
+        location: option("location"),
         remote: flag("remote"),
-        ...(days && { days: Number(days) }),
-        limit: Number(option("limit") ?? 20),
+        posted: posted as PostedWindow | undefined,
+        limit: Number(option("limit") ?? 25),
         keep: flag("keep"),
       }));
       break;
     }
+    case "more":
+      print(await moreFromJoboid());
+      break;
     case "load": {
       if (!target) throw new Error("Usage: jevjob load <file.json|->");
       const text = target === "-" ? readFileSync(0, "utf8") : readFileSync(target, "utf8");

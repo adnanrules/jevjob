@@ -31,6 +31,8 @@ export const fromRoot = (...parts: string[]) => path.join(/*turbopackIgnore: tru
 
 /** Where a harness's postings live. Deleting it puts the app back on the fictional demo pool. */
 export const JOBS_FILE = fromRoot(".jevjob", "jobs.json");
+/** The searches behind the current pool, and every posting already shown (for "more"). */
+export const SESSION_FILE = fromRoot(".jevjob", "session.json");
 export const JEV_CACHE_DIR = fromRoot(".jevjob", "cache", "jev");
 
 /** Joboid's folder: JOBOID_DIR, or the Joboid repo this project lives inside (projects/jevjob → ../..). */

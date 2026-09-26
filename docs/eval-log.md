@@ -98,3 +98,23 @@ No thresholds were tuned in this entry.
 Because these fixes were found by reading held-out errors, the 14/18 is optimistic. The clean held-out number
 remains entry 4's 10/18. The honest claim is that the fixes addressed the diagnosed causes without hurting dev.
 A fresh held-out set is needed before calling any later number clean.
+
+## 6. Real postings: requirement coverage (extraction cascade)
+
+The labeled sets all have tidy requirements sections, so they can't measure this. Real postings often don't:
+header wording varies, or the qualifications are loose sentences. When the rules find fewer than 3 required
+items, Jev now classifies every candidate line of the posting (required / preferred / duty / other) and the
+usual per-requirement questions run on what it found. That first call depends only on the posting, so it's
+cached across resumes.
+
+Measured with `npm run coverage` on 50 live postings from Joboid ("software engineer": 25 Chicago, 25 remote):
+
+| | rules | jev |
+|---|---|---|
+| Postings with no requirements found | 13/50 | **3/50** |
+| Jev calls | 0 | 65 (15 postings needed the extra extraction call) |
+
+Spot checks of the extracted lines looked right (C/C++, Linux internals, kernel hardening as required; "strong
+background in scalable systems" as preferred). The dev and held-out numbers are unchanged, because every labeled
+posting has at least 3 rule-extracted requirements and never takes the new path. This measures coverage, not
+accuracy. Accuracy on messy postings needs its own labeled set.

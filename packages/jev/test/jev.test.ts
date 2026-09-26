@@ -100,7 +100,16 @@ describe("createJevAssessor", () => {
       defaultModel: "jev-test",
       systemOne: (async (req: { questions: Record<string, { type: string }> }) => {
         client.calls++;
-        const answers = Object.fromEntries(Object.entries(req.questions).map(([k, q]) => [k, q.type === "noul" ? noul(0.9) : choice("meets")]));
+        // Stage-1 line questions: every line containing "Python" or "degree" is a requirement, the rest are duties.
+        const answers = Object.fromEntries(
+          Object.entries(req.questions).map(([k, q]) => {
+            if (k.startsWith("role_of_line_")) {
+              const line = String((q as { instructions?: { line?: string } }).instructions?.line ?? "");
+              return [k, choice(/python|degree/i.test(line) ? "required" : "duty")];
+            }
+            return [k, q.type === "noul" ? noul(0.9) : choice("meets")];
+          }),
+        );
         return { model: "jev-test", answers, usage: { input_tokens: 1234, output_tokens: 0 } };
       }) as unknown as JevClient["systemOne"],
     };
@@ -113,6 +122,23 @@ describe("createJevAssessor", () => {
     expect(client.calls).toBe(1);
     expect(result).toMatchObject({ calls: 1, inputTokens: 1234, cached: false });
     expect(result.assessed.assessments.every((a) => a.source === "jev")).toBe(true);
+  });
+
+  it("asks Jev to find the requirements when a posting has no recognizable requirements section", async () => {
+    const client = fakeClient();
+    const headerless: RawJob = {
+      ...jobAt("Riverline Capital"),
+      id: "headerless:1",
+      description: [
+        "About the team", "We build models for the trading desk.",
+        "The work", "• Ship models to production", "• Partner with traders",
+        "Who thrives here", "• Strong Python", "• A degree in a quantitative field", "• Enjoys ambiguity",
+      ].join("\n"),
+    };
+    const result = await createJevAssessor({ client }).assess(resume, headerless);
+    expect(client.calls).toBe(2);
+    expect(result.calls).toBe(2);
+    expect(result.assessed.requirements.map((r) => r.text)).toEqual(["Strong Python", "A degree in a quantitative field"]);
   });
 
   it("serves an identical second request from the cache", async () => {

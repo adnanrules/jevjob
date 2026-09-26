@@ -10,7 +10,7 @@ export interface JobCard {
 }
 
 export type RankEvent =
-  | { type: "start"; assessor: "rules" | "jev"; model: string | null; source: "harness" | "demo"; jobs: JobCard[] }
+  | { type: "start"; assessor: "rules" | "jev"; model: string | null; source: "harness" | "demo"; poolVersion: string; jobs: JobCard[] }
   /** Requirements were extracted from the posting. */
   | { type: "parsed"; id: string; requirements: number }
   /** Facts are in. `fallback` means Jev failed for this job and the rules answered instead. */

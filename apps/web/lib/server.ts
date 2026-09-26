@@ -1,9 +1,9 @@
 // Server-only helpers. Job pool and assessor selection live in @jevjob/harness, shared with the CLI and MCP server.
 import { readFileSync } from "node:fs";
 import path from "node:path";
-import { currentJobs, getAssessor, jevAvailable, ROOT } from "@jevjob/harness/pool";
+import { currentJobs, getAssessor, jevAvailable, poolVersion, ROOT } from "@jevjob/harness/pool";
 
-export { currentJobs as loadJobs, getAssessor, jevAvailable };
+export { currentJobs as loadJobs, getAssessor, jevAvailable, poolVersion };
 export type AssessorName = "rules" | "jev";
 export const jevModel = () => process.env.TYPESAFE_DEFAULT_MODEL ?? "jev-latest";
 

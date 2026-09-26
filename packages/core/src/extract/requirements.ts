@@ -12,7 +12,8 @@ const REQUIRED_HEADER =
   /\b(requirements|qualifications|required|what you('ll)? need|you have|must[- ]haves?|skills|who you are)\b/i;
 const PREFERRED_HEADER = /\b(nice[- ]to[- ]haves?|preferred|bonus|desired|pluses|a plus)\b/i;
 const MAX_HEADER_LENGTH = 90;
-const BULLET = /^[-*•]\s+/;
+// "-", "*" and "–" need a space after them ("**Bold**" isn't a bullet); "●Line" often has none.
+const BULLET = /^(?:[-*–]\s+|[•●▪◦‣]\s*)/;
 
 export function extractRequirements(job: RawJob): Requirement[] {
   const requirements: Requirement[] = [];
@@ -31,6 +32,34 @@ export function extractRequirements(job: RawJob): Requirement[] {
     if (section) requirements.push(...fromLine(line.replace(BULLET, ""), section, job.id, requirements.length));
   }
   return requirements;
+}
+
+/**
+ * Turns lines someone else classified (Jev, in the extraction cascade) into requirements, with the same
+ * per-line parsing the header-based extractor uses.
+ */
+export function requirementsFromLines(lines: Array<{ text: string; importance: Importance }>, jobId: string): Requirement[] {
+  const requirements: Requirement[] = [];
+  for (const { text, importance } of lines) requirements.push(...fromLine(text, importance, jobId, requirements.length));
+  return requirements;
+}
+
+/**
+ * Every line of a posting that could be a qualification, for a classifier to sort out when the posting has no
+ * recognizable requirements header. Bullets first; if a posting barely uses bullets, its sentences too.
+ */
+export function candidateLines(description: string, max = 70): string[] {
+  const lines = description.split("\n").map((l) => l.trim()).filter(Boolean);
+  const bullets = lines.filter((l) => BULLET.test(l)).map((l) => l.replace(BULLET, "").trim());
+  const sentences =
+    bullets.length >= 5
+      ? []
+      : lines
+          .filter((l) => !BULLET.test(l) && l.length > MAX_HEADER_LENGTH)
+          .flatMap((l) => l.split(/(?<=[.;])\s+(?=[A-Z])/))
+          .map((s) => s.trim());
+  const usable = [...bullets, ...sentences].filter((l) => l.length >= 8 && l.length <= 300);
+  return [...new Set(usable)].slice(0, max);
 }
 
 /**

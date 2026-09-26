@@ -25,6 +25,8 @@ export interface MachineState {
   assessor: "rules" | "jev" | null;
   model: string | null;
   source: "harness" | "demo" | null;
+  /** Which version of the job pool this run ranked; the page compares it with the live pool. */
+  poolVersion: string | null;
   order: string[];
   jobs: Record<string, JobState>;
   error: string | null;
@@ -35,7 +37,7 @@ type Action =
   | { type: "event"; event: RankEvent }
   | { type: "stage"; id: string; stage: Stage; revealed?: boolean };
 
-const initial: MachineState = { status: "idle", assessor: null, model: null, source: null, order: [], jobs: {}, error: null };
+const initial: MachineState = { status: "idle", assessor: null, model: null, source: null, poolVersion: null, order: [], jobs: {}, error: null };
 
 function reducer(state: MachineState, action: Action): MachineState {
   if (action.type === "reset") return initial;
@@ -53,6 +55,7 @@ function reducer(state: MachineState, action: Action): MachineState {
         assessor: e.assessor,
         model: e.model,
         source: e.source,
+        poolVersion: e.poolVersion,
         order: e.jobs.map((j) => j.id),
         jobs: Object.fromEntries(
           e.jobs.map((card) => [card.id, { card, stage: "found", requirements: null, assessed: null, revealed: false, ms: null, cached: false, fallback: false }]),

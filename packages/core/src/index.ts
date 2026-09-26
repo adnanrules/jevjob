@@ -1,6 +1,6 @@
 export * from "./domain";
 export { findSkills, RELATED_SKILLS } from "./skills";
-export { extractRequirements } from "./extract/requirements";
+export { candidateLines, extractRequirements, requirementsFromLines } from "./extract/requirements";
 export { parseResume, yearsOf, type ParseResumeOptions } from "./extract/resume";
 export {
   assessJob, assessRequirement, BORDERLINE_YEARS, rulesAssessor, SILENCE_MEANS_NO, worstVerdict,
