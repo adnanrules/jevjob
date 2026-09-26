@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { assessJob } from "../src/assess/rules";
 import type { Tier } from "../src/domain";
 import { parseResume } from "../src/extract/resume";
-import { rankJobs, TIER_ORDER } from "../src/policy/rank";
+import { classify, rankJobs, TIER_ORDER } from "../src/policy/rank";
 import { fixture, jobs, resumeText } from "./helpers";
 
 const resume = parseResume(resumeText, { asOf: new Date("2026-09-25") });
@@ -51,6 +51,13 @@ describe("policy", () => {
 
   it("keeps blocked jobs at 'no' even at full aggressiveness", () => {
     expect(tiersAt(1)["loop-defense-systems:fixture:5005"]).toBe("no");
+  });
+
+  it("never says 'apply' to a posting it couldn't read any requirements from", () => {
+    const unreadable = { ...pool[0]!, requirements: [], assessments: [] };
+    const { ranked } = classify(unreadable, 1);
+    expect(ranked.tier).toBe("maybe");
+    expect(ranked.reasons[0]).toMatch(/Couldn't find/);
   });
 
   it("explains itself: blockers come first in the reasons", () => {

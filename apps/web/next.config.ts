@@ -2,7 +2,7 @@ import type { NextConfig } from "next";
 
 const config: NextConfig = {
   // The workspace packages ship TypeScript source; Next compiles them like app code.
-  transpilePackages: ["@jevjob/core", "@jevjob/jev"],
+  transpilePackages: ["@jevjob/core", "@jevjob/jev", "@jevjob/harness"],
 };
 
 export default config;

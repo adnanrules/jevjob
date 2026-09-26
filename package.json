@@ -17,7 +17,9 @@
     "eval": "tsx packages/eval/src/run.ts",
     "compare": "tsx scripts/compare.ts",
     "sweep": "tsx packages/eval/src/sweep.ts",
-    "web": "npm run dev -w @jevjob/web"
+    "web": "npm run dev -w @jevjob/web",
+    "jevjob": "tsx packages/harness/src/cli.ts",
+    "mcp": "tsx packages/harness/src/mcp.ts"
   },
   "devDependencies": {
     "@types/node": "^26.6.2",

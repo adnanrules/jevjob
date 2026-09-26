@@ -30,6 +30,22 @@ describe("extractRequirements", () => {
     expect(degree).toMatchObject({ minDegree: "master", importance: "required" });
   });
 
+  it("finds requirement headers phrased the way real postings phrase them", () => {
+    const job = {
+      ...jobAt("Lakeshore Logistics"),
+      description: [
+        "What You'll Do", "• Build things",
+        "Your Skills & Abilities (Required Qualifications)", "• Minimum 10 years of professional software development experience", "• Excellent knowledge of C++ and Java",
+        "What Will Give You A Competitive Edge (Preferred Qualifications)", "• Kubernetes",
+        "This role requires relocation and the candidate must be available in person.", "• Not a requirement bullet",
+      ].join("\n"),
+    };
+    const reqs = extractRequirements(job);
+    expect(reqs.map((r) => [r.importance, r.kind])).toEqual([
+      ["required", "experience"], ["required", "skill"], ["required", "skill"], ["preferred", "skill"],
+    ]);
+  });
+
   it("ignores responsibilities bullets", () => {
     const texts = extractRequirements(jobAt("Lakeshore Logistics")).map((r) => r.text);
     expect(texts).not.toContain("Write tests and participate in code review");

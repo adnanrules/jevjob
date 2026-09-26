@@ -68,8 +68,13 @@ export function classify(
     score(required, unclearCredit) + policy.preferredWeight * score(preferred, unclearCredit) - policy.hardGapPenalty * hardGaps;
   const shift = (0.5 - a) * 2 * policy.thresholdSwing;
 
+  // No requirements found (no bullets, no requirements header) means we know nothing, not that
+  // there's nothing to fail. Without this guard an empty list scores 100% and lands on "apply".
+  const unreadable = required.length === 0;
+
   const tier: Tier =
     blockers.length > 0 ? "no" // "Apply anyway" can't give you a clearance.
+    : unreadable ? "maybe"
     : fit >= policy.thresholds.apply + shift ? "apply"
     : fit >= policy.thresholds.maybe + shift ? "maybe"
     : fit >= policy.thresholds.stretch + shift ? "stretch"
@@ -81,9 +86,12 @@ export function classify(
     coverage: { required: coverage(required), preferred: coverage(preferred) },
     tier,
     rank: 0,
-    reasons: reasons(required, preferred, blockers),
+    reasons: unreadable
+      ? ["Couldn't find a list of requirements in this posting; read it yourself", ...reasons(required, preferred, blockers).slice(1)]
+      : reasons(required, preferred, blockers),
   };
-  return { ranked, fit };
+  // An unreadable posting sorts below every posting we actually understood in its tier.
+  return { ranked, fit: unreadable ? -Infinity : fit };
 }
 
 function joinAssessments({ requirements, assessments }: AssessedJob): Row[] {
