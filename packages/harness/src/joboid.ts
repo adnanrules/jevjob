@@ -15,7 +15,7 @@ import { promisify } from "node:util";
 import { extractRequirements, normalizeJobs, type RawJob } from "@jevjob/core";
 import { levelFit, locationFit, POSTED_WINDOWS, type SearchPlan } from "./intent";
 import { currentJobs, loadJobs, type LoadSummary } from "./jobs";
-import { joboidDir, SESSION_FILE } from "./paths";
+import { joboidDir, loadEnv, SESSION_FILE } from "./paths";
 
 const run = promisify(execFile);
 
@@ -52,6 +52,8 @@ const writeSession = (s: Session) => {
 };
 
 async function joboid(dir: string, args: string[]): Promise<unknown> {
+  // JevJob's .env can hold EXA_API_KEY too; Joboid inherits it from this process's environment.
+  loadEnv();
   const { stdout } = await run("uv", ["run", "joboid", ...args], { cwd: dir, maxBuffer: 128 * 1024 * 1024, windowsHide: true });
   return JSON.parse(stdout);
 }
