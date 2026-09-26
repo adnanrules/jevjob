@@ -8,7 +8,7 @@ the ranking.
 ```
 you ─▶ harness LLM ─▶ JevJob MCP tools ─▶ Jev (1 call / posting) ─▶ ranked board in your browser
           │                 ▲
-          └─ finds postings ┘  (or: import_from_joboid, which pulls live postings with no LLM tokens at all)
+          └─ finds postings ┘  (the model writes a search plan; find_jobs does the finding with no LLM tokens)
 ```
 
 ## Tools (MCP) and commands (CLI)
