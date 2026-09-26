@@ -8,7 +8,7 @@
 //
 // A session (.jevjob/session.json) keeps the plans behind the current pool and every posting shown, so
 // `more` reruns the same plans and returns only postings you haven't seen.
-import { execFile } from "node:child_process";
+import { execFile, spawn } from "node:child_process";
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { promisify } from "node:util";
@@ -51,11 +51,22 @@ const writeSession = (s: Session) => {
   writeFileSync(SESSION_FILE, JSON.stringify(s, null, 2));
 };
 
-async function joboid(dir: string, args: string[]): Promise<unknown> {
+export async function joboid(dir: string, args: string[]): Promise<unknown> {
   // Joboid inherits this process's environment, including anything set in JevJob's .env.
   loadEnv();
   const { stdout } = await run("uv", ["run", "joboid", ...args], { cwd: dir, maxBuffer: 128 * 1024 * 1024, windowsHide: true });
   return JSON.parse(stdout);
+}
+
+/**
+ * Refreshes Joboid's listings cache in the background (a no-op when it's under 12 hours old). A full refresh takes
+ * minutes, so searches read the cache with --no-refresh instead of waiting; this keeps that cache current.
+ */
+export function refreshInBackground(dir: string): void {
+  loadEnv();
+  const child = spawn("uv", ["run", "joboid", "refresh"], { cwd: dir, detached: true, stdio: "ignore", windowsHide: true });
+  child.on("error", () => {}); // uv missing: career sites just use whatever is cached
+  child.unref();
 }
 
 const MIN_YEARS_FOR_ENTRY = 3;

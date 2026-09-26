@@ -8,8 +8,10 @@ import { planFromQuery } from "../src/intent";
 import { plainText } from "../src/posting";
 import { entryExperienceIssue, sourceIssue } from "../src/search-quality";
 
-// The search session writes files; keep them away from the real pool.
+// The search session writes files; keep them away from the real pool. No Joboid either: career sites are
+// "unavailable", so a short search goes straight to widening its window.
 process.env.JEVJOB_DATA_DIR = mkdtempSync(path.join(tmpdir(), "jevjob-test-"));
+process.env.JOBOID_DIR = process.env.JEVJOB_DATA_DIR;
 let indeed: typeof import("../src/indeed");
 let jobs: typeof import("../src/jobs");
 beforeAll(async () => {
@@ -69,6 +71,18 @@ describe("quality checks from live searches", () => {
     expect(entryExperienceIssue("You have 5 years of programming experience.")).toBe(true);
   });
 
+  it("ends a preferred section at the next header (a live Capgemini posting slipped through)", () => {
+    const posting = [
+      "Required Skills & Experience", "Strong expertise in Java 17/21 and Spring Boot.",
+      "Preferred Qualifications", "AWS Architect Certification", "Strong analytical and problem-solving skills",
+      "Soft Skills", "Strong communication and collaboration abilities",
+      "Experience Level", "8 to 12+ years of Java development experience.",
+    ].join("\n");
+    expect(entryExperienceIssue(posting)).toBe(true);
+    // A preferred bullet that merely starts with "Experience" is not a header.
+    expect(entryExperienceIssue("Nice to have\nExperience with Kafka\n5+ years of Scala experience")).toBe(false);
+  });
+
   it("does not mistake company history, preferred experience, or junior ranges for hard requirements", () => {
     expect(entryExperienceIssue("Our company has 100 years of experience in finance.")).toBe(false);
     expect(entryExperienceIssue("Preferred Qualifications\n5 years of Java experience\nRequirements\n0-2 years of experience")).toBe(false);
@@ -89,6 +103,9 @@ describe("quality checks from live searches", () => {
 });
 
 // Shaped exactly like the Indeed plugin's output.
+/** A date the way the plugin writes it, n days ago. */
+const daysAgo = (n: number) => new Date(Date.now() - n * 86_400_000).toLocaleDateString("en-US", { month: "long", day: "2-digit", year: "numeric", timeZone: "UTC" });
+
 const listing = (id: number, title: string, company: string, location: string, posted = "September 20, 2026") => `**Job Title:** ${title}
             **Job Id:** JOBSEARCH_${id}
             **Company:** ${company}
@@ -98,12 +115,12 @@ const listing = (id: number, title: string, company: string, location: string, p
             **Compensation:** $90,000 - $120,000 a year
             **View Job URL:** https://to.indeed.com/aa${id}
             `;
-const details = (id: number, title: string, company: string, location: string, body: string) => `### ${title}
+const details = (id: number, title: string, company: string, location: string, body: string, posted = "September 20, 2026") => `### ${title}
         **View Job URL:** https://to.indeed.com/bb${id}
         **Job Id:** JOBSEARCH_${id}
         **Company:** ${company}
         **Location:** ${location}
-        **Posted on:** September 20, 2026
+        **Posted on:** ${posted}
         **Job Type:** Full-time
         **Compensation:** $90,000 - $120,000 a year
 
@@ -173,5 +190,72 @@ describe("the Indeed flow", () => {
     });
     expect(summary.addedNow).toBe(1);
     expect(jobs.currentJobs().jobs[0]!.applyUrl).toBe("https://acme.example/careers/1");
+  });
+});
+
+describe("when the search runs short", () => {
+  const body = "Qualifications\n\nPython\n\nSQL\n\nA bachelor's degree in computer science\n\n0-2 years of experience";
+  const chicagoOnly = () => indeed.startSearch(planFromQuery("junior software engineer in Chicago, last 7 days", { locationMode: "strict" }));
+
+  it("widens only in steps, never past 4x the request (and at least to 30 days)", () => {
+    expect(indeed.widenSteps(7)).toEqual([14, 30]);
+    expect(indeed.widenSteps(1)).toEqual([3, 7, 14, 30]);
+    expect(indeed.widenSteps(30)).toEqual([60, 90]);
+  });
+
+  it("skips an area once Indeed only repeats itself there", () => {
+    const brief = chicagoOnly();
+    const [q1, q2, q3] = brief.titles;
+    const same = [listing(40, "Software Engineer", "Repeat Co", "Chicago, IL", daysAgo(2)), listing(41, "Web Developer", "Other Co", "Chicago, IL", daysAgo(3))].join("\n\n");
+    expect(indeed.addSearchResults(same, { title: q1!, location: "Chicago, IL" }).saturated).toEqual([]);
+    indeed.addSearchResults(same, { title: q2!, location: "Chicago, IL" }); // nothing new: dry once
+    const third = indeed.addSearchResults(same, { title: q3!, location: "Chicago, IL" }); // dry twice: skip the area
+    expect(third.saturated).toEqual(["chicago, il"]);
+    expect(third.next).not.toContain("search_jobs");
+  });
+
+  it("holds near misses back, then widens the window and tags them", () => {
+    const brief = chicagoOnly();
+    const results = indeed.addSearchResults(
+      [
+        listing(50, "Software Engineer", "Fresh Co", "Chicago, IL", daysAgo(2)),
+        listing(51, "Software Engineer", "Nearly Co", "Evanston, IL", daysAgo(10)),
+        listing(52, "Software Engineer", "Ancient Co", "Chicago, IL", daysAgo(60)),
+      ].join("\n\n"),
+      { title: brief.titles[0]!, location: "Chicago, IL" },
+    );
+    expect(results.fetch).toEqual(["JOBSEARCH_50"]);
+    expect(results.nearMisses).toBe(1);
+    expect(results.widenedTo).toBeNull();
+    expect(results.skipped["too old"]).toBe(1);
+
+    // The remaining searches find nothing new, so Chicago saturates and the 10-day-old posting is released.
+    let last = results;
+    for (const title of brief.titles.slice(1)) {
+      if (!last.next.includes("search_jobs")) break;
+      last = indeed.addSearchResults(listing(50, "Software Engineer", "Fresh Co", "Chicago, IL", daysAgo(2)), { title, location: "Chicago, IL" });
+    }
+    expect(last.widenedTo).toBe(14);
+    expect(last.fetch).toEqual(["JOBSEARCH_50", "JOBSEARCH_51"]); // in-window first
+
+    const loaded = indeed.addJobs({
+      indeedDetails: [
+        details(50, "Software Engineer", "Fresh Co", "Chicago, IL", body, daysAgo(2)),
+        details(51, "Software Engineer", "Nearly Co", "Evanston, IL", body, daysAgo(10)),
+      ],
+    });
+    expect(loaded.addedNow).toBe(2);
+    const pool = jobs.currentJobs().jobs;
+    expect(pool.find((j) => j.company === "Fresh Co")!.outsideWindowDays).toBeUndefined();
+    expect(pool.find((j) => j.company === "Nearly Co")!.outsideWindowDays).toBe(7);
+    expect(loaded.next).toContain("used up");
+  });
+
+  it("fills in the company when job details say None", () => {
+    const brief = indeed.startSearch(planFromQuery("software engineer in Chicago"));
+    indeed.addSearchResults(listing(60, "Software Engineer", "Named Co", "Chicago, IL"), { title: brief.titles[0]!, location: "Chicago, IL" });
+    const loaded = indeed.addJobs({ indeedDetails: [details(60, "Software Engineer", "None", "Chicago, IL", body)] });
+    expect(loaded.addedNow).toBe(1);
+    expect(jobs.currentJobs().jobs[0]!.company).toBe("Named Co");
   });
 });

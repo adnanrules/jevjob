@@ -15,6 +15,7 @@ const JevJobShape = z.object({
   postingUrl: httpUrl.optional(),
   postedAt: z.string().optional(),
   pay: z.string().max(120).optional(),
+  outsideWindowDays: z.number().positive().max(365).optional(),
   description: z.string(),
 });
 
@@ -58,8 +59,8 @@ export function normalizeJobs(input: unknown): IngestResult {
 function toRawJob(item: unknown): RawJob | string {
   const ours = JevJobShape.safeParse(item);
   if (ours.success) {
-    const { postedAt, postingUrl, pay, ...rest } = ours.data;
-    return { ...rest, ...(postingUrl && { postingUrl }), ...(postedAt && { postedAt }), ...(pay && { pay }) };
+    const { postedAt, postingUrl, pay, outsideWindowDays, ...rest } = ours.data;
+    return { ...rest, ...(postingUrl && { postingUrl }), ...(postedAt && { postedAt }), ...(pay && { pay }), ...(outsideWindowDays && { outsideWindowDays }) };
   }
   const joboid = JoboidShape.safeParse(item);
   if (joboid.success) {

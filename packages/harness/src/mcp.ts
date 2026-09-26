@@ -8,20 +8,23 @@ import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js"
 import { z } from "zod";
 import {
   addJobs, addSearchResults, APP_URL, BATCH_SIZE, clearJobs, currentJobs, jevAvailable, moreFromSearch, openApp, planFromQuery,
-  rankResume, searchStatus, startSearch, validatePlan, type SearchPlan,
+  joboidDir, rankResume, refreshInBackground, searchCareerSites, searchStatus, startSearch, validatePlan, type SearchPlan,
 } from "./index";
 
 const WORKFLOW = [
   "Workflow: (1) start_search with the user's request. (2) For each search it lists, call the Indeed plugin's search_jobs",
   "(country_code US) and pass its raw output to add_search_results. It answers with job ids to fetch. (3) Call get_job_details",
-  "for those ids and pass the raw outputs to add_jobs (several per call is fine). (4) Repeat until add_jobs says done, then",
-  "open_app. If the Indeed plugin isn't available, use your web search instead: find individual postings (employer career",
-  "sites preferred), read each one, and pass them to add_jobs as postings. Pass tool output verbatim; never summarize or",
-  "judge postings yourself. 'more' or 'next 50' → more_jobs, then continue the same way.",
+  "for those ids and pass the raw outputs to add_jobs (several per call is fine). (4) When `next` says so, call",
+  "search_career_sites (no arguments; company career sites through Joboid). (5) Follow `next` until it says done or that",
+  "every source is used up, then open_app. JevJob skips Indeed areas that only repeat themselves, and widens a short",
+  "'posted within' window step by step (tagging those postings), so just follow `next`. If the Indeed plugin isn't",
+  "available, use your web search instead: find individual postings (employer career sites preferred), read each one,",
+  "and pass them to add_jobs as postings. Pass tool output verbatim; never summarize or judge postings yourself.",
+  "'more' or 'next 50' → more_jobs, then continue the same way.",
 ].join(" ");
 
 const server = new McpServer(
-  { name: "jevjob", version: "0.3.0" },
+  { name: "jevjob", version: "0.4.0" },
   {
     instructions: [
       "JevJob ranks job postings against a resume, one small typed classification per requirement, and shows them in a web app.",
@@ -82,6 +85,8 @@ server.registerTool(
         count: Math.min(input.count ?? base.count ?? BATCH_SIZE, BATCH_SIZE),
         ...(input.strict_location !== undefined && { locationMode: input.strict_location ? "strict" : "expand" }),
       });
+      const joboid = joboidDir();
+      if (joboid) refreshInBackground(joboid); // ready by the time Indeed is used up and career sites are searched
       return json(startSearch({ ...plan, count: input.count ?? BATCH_SIZE }));
     } catch (err) {
       return fail(err);
@@ -133,6 +138,22 @@ server.registerTool(
   async ({ indeed_details, postings }) => {
     try {
       return json(addJobs({ indeedDetails: indeed_details, postings }));
+    } catch (err) {
+      return fail(err);
+    }
+  },
+);
+
+server.registerTool(
+  "search_career_sites",
+  {
+    title: "Search company career sites",
+    description:
+      "Call when `next` says so (after Indeed is used up). JevJob searches the employer career sites Joboid tracks for the current search, applies the same checks, and loads what fits, with direct employer apply links. Takes a few seconds to a minute.",
+  },
+  async () => {
+    try {
+      return json(await searchCareerSites());
     } catch (err) {
       return fail(err);
     }

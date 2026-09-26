@@ -18,6 +18,11 @@ export interface RawJob {
   pay?: string;
   /** ISO date (YYYY-MM-DD). */
   postedAt?: string;
+  /**
+   * Set when the search only found this job by widening its "posted within" window: the window the user asked
+   * for, in days. It ranks below in-window jobs of the same tier, and the UI says it's outside the window.
+   */
+  outsideWindowDays?: number;
   /** Plain-text description. Requirement extraction reads this. */
   description: string;
 }

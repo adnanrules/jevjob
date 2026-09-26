@@ -15,14 +15,22 @@ export function sourceIssue(job: RawJob): string | null {
   return null;
 }
 
+const PREFERRED_START = /^(?:preferred|desired|nice to have|bonus|what would make you stand out)\b/i;
+const REQUIRED_START = /^(?:required|requirements|qualifications|minimum|about|benefits|responsibilities)\b/i;
+/**
+ * Other section headers end a preferred section too ("Soft Skills", "Experience Level"). They have to be the whole
+ * line, so a preferred bullet like "Experience with Kafka" doesn't count as a header.
+ */
+const OTHER_HEADER = /^(?:experience(?: level| required)?|level|seniority(?: level)?|(?:soft |technical |core )?skills|education|must[- ]haves?|what you(?:'ll)? (?:need|bring)|who you are|you have|the role|about the role|job details|additional information|location)\s*:?$/i;
+
 /** Handles unbulleted and HTML listings without confusing company age with candidate experience. */
 export function entryExperienceIssue(description: string): boolean {
   const text = plainText(description).replace(/[\u2010-\u2015]/g, "-");
   let preferred = false;
   for (const line of text.split(/\n|(?<=[.!?;])\s+(?=[A-Z])/)) {
     const trimmed = line.trim();
-    if (trimmed.length < 100 && /^(?:preferred|desired|nice to have|bonus|what would make you stand out)\b/i.test(trimmed)) preferred = true;
-    else if (trimmed.length < 100 && /^(?:required|requirements|qualifications|minimum|about|benefits|responsibilities)\b/i.test(trimmed)) preferred = false;
+    if (trimmed.length < 100 && PREFERRED_START.test(trimmed)) preferred = true;
+    else if (trimmed.length < 100 && (REQUIRED_START.test(trimmed) || OTHER_HEADER.test(trimmed))) preferred = false;
     for (const match of trimmed.matchAll(/\b(\d+)\s*(?:\+|(?:-|to)\s*\d+)?\s*\+?\s*years?\b/gi)) {
       if (Number(match[1]) < 3) continue;
       const before = trimmed.slice(Math.max(0, match.index - 90), match.index);

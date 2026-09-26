@@ -3,6 +3,7 @@ import { useEffect } from "react";
 import { motion } from "motion/react";
 import { worstVerdict, type Assessment, type RankedJob, type Requirement, type Verdict } from "@jevjob/core";
 import { TIERS, VERDICTS } from "@/lib/tiers";
+import { windowNote } from "@/lib/window";
 
 interface Line {
   text: string;
@@ -49,6 +50,7 @@ export function Detail({ r, tab, onTab, onClose }: {
   }, [onClose]);
 
   const tier = TIERS[r.tier];
+  const late = windowNote(r.job);
   const lines = linesOf(r);
   const { required: req, preferred: pref } = r.coverage;
   const confidences = r.assessments.filter((a) => a.source === "jev" && a.confidence !== null).map((a) => a.confidence!);
@@ -75,6 +77,7 @@ export function Detail({ r, tab, onTab, onClose }: {
           <div>
             <h3>{r.job.title}</h3>
             <p>{r.job.company}{r.job.location ? ` · ${r.job.location}` : ""}</p>
+            {late && <p className="late-note">{late.long}</p>}
           </div>
           <button className="close" onClick={onClose} aria-label="Close">×</button>
         </div>
@@ -88,6 +91,7 @@ export function Detail({ r, tab, onTab, onClose }: {
           <div className="posting" role="tabpanel">
             <div className="posting-meta">
               {r.job.postedAt && <span>Posted {r.job.postedAt}</span>}
+              {late && <span className="late" title={late.long}>{late.short}</span>}
               <a className="apply" href={r.job.postingUrl ?? r.job.applyUrl} target="_blank" rel="noopener noreferrer">
                 Open on {new URL(r.job.postingUrl ?? r.job.applyUrl).hostname.replace(/^www\./, "")} ↗
               </a>

@@ -38,11 +38,12 @@ interface Row {
   verdict: Verdict;
 }
 
-/** Rank a pool of assessed jobs. Best first; `rank` is 1-based. */
+/** Rank a pool of assessed jobs. Best first; `rank` is 1-based. Within a tier, jobs inside the posted window come first. */
 export function rankJobs(pool: AssessedJob[], aggressiveness: Aggressiveness = 0.5, policy: Policy = POLICY): RankedJob[] {
+  const outside = (r: { ranked: RankedJob }) => Number(Boolean(r.ranked.job.outsideWindowDays));
   return pool
     .map((job) => classify(job, aggressiveness, policy))
-    .sort((a, b) => TIER_ORDER.indexOf(a.ranked.tier) - TIER_ORDER.indexOf(b.ranked.tier) || b.fit - a.fit)
+    .sort((a, b) => TIER_ORDER.indexOf(a.ranked.tier) - TIER_ORDER.indexOf(b.ranked.tier) || outside(a) - outside(b) || b.fit - a.fit)
     .map(({ ranked }, i) => ({ ...ranked, rank: i + 1 }));
 }
 

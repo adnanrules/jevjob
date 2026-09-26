@@ -29,7 +29,7 @@ describe("jevjob MCP server", () => {
   it("exposes the Indeed-first workflow", async () => {
     const { tools } = await client.listTools();
     expect(tools.map((t) => t.name).sort()).toEqual(
-      ["add_jobs", "add_search_results", "clear_jobs", "more_jobs", "open_app", "rank", "start_search", "status"],
+      ["add_jobs", "add_search_results", "clear_jobs", "more_jobs", "open_app", "rank", "search_career_sites", "start_search", "status"],
     );
   });
 

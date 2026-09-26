@@ -2,6 +2,7 @@
 import { AnimatePresence, motion } from "motion/react";
 import type { RankedJob } from "@jevjob/core";
 import { TIERS } from "@/lib/tiers";
+import { windowNote } from "@/lib/window";
 import { Barcode } from "./Barcode";
 import { Chip } from "./Chip";
 
@@ -22,6 +23,7 @@ function Row({ r, onOpen: open }: { r: RankedJob; onOpen: (id: string, tab: Deta
   const onOpen = (id: string) => open(id, "match");
   const tier = TIERS[r.tier];
   const req = r.coverage.required;
+  const late = windowNote(r.job);
   return (
     <motion.div
       layout="position"
@@ -48,6 +50,7 @@ function Row({ r, onOpen: open }: { r: RankedJob; onOpen: (id: string, tab: Deta
           {r.job.company}{r.job.location ? ` · ${r.job.location}` : ""}
           {r.job.pay && <span className="pay"> · {r.job.pay}</span>}
         </div>
+        {late && <span className="late" title={late.long}>{late.short}</span>}
       </div>
       {r.requirements.length ? <Barcode assessed={r} revealed /> : <span className="unread">no requirements listed</span>}
       <div className="cov" title="Required qualifications you meet">{req.total ? `${req.met}/${req.total}` : "–"}</div>
