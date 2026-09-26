@@ -12,19 +12,19 @@ import {
 } from "./index";
 
 const WORKFLOW = [
-  "Workflow: (1) start_search with the user's request. (2) For each search it lists, call the Indeed plugin's search_jobs",
-  "(country_code US) and pass its raw output to add_search_results. It answers with job ids to fetch. (3) Call get_job_details",
-  "for those ids and pass the raw outputs to add_jobs (several per call is fine). (4) When `next` says so, call",
-  "search_career_sites (no arguments; company career sites through Joboid). (5) Follow `next` until it says done or that",
-  "every source is used up, then open_app. JevJob skips Indeed areas that only repeat themselves, and widens a short",
-  "'posted within' window step by step (tagging those postings), so just follow `next`. If the Indeed plugin isn't",
-  "available, use your web search instead: find individual postings (employer career sites preferred), read each one,",
-  "and pass them to add_jobs as postings. Pass tool output verbatim; never summarize or judge postings yourself.",
-  "'more' or 'next 50' → more_jobs, then continue the same way.",
+  "Workflow: (1) start_search with the user's request. (2) If the Indeed plugin is available: for each search it lists,",
+  "call Indeed search_jobs (country_code US) and pass its raw output to add_search_results; it answers with job ids to",
+  "fetch; call get_job_details for those and pass the raw outputs to add_jobs (several per call is fine). If Indeed is",
+  "missing or rate-limited, skip to step 3. (3) Call search_career_sites (no arguments): employers' own career sites and,",
+  "for entry-level searches, the community new-grad list. (4) Follow `next` until it says done or that every source is",
+  "used up, then open_app. JevJob skips Indeed areas that only repeat themselves, and widens a short 'posted within'",
+  "window step by step (tagging those postings), so just follow `next`. Still short without Indeed? Use your web search:",
+  "find individual postings (employer career sites preferred), read each one, and pass them to add_jobs as postings.",
+  "Pass tool output verbatim; never summarize or judge postings yourself. 'more' or 'next 50' → more_jobs, then continue.",
 ].join(" ");
 
 const server = new McpServer(
-  { name: "jevjob", version: "0.4.0" },
+  { name: "jevjob", version: "1.0.0" },
   {
     instructions: [
       "JevJob ranks job postings against a resume, one small typed classification per requirement, and shows them in a web app.",
@@ -149,7 +149,7 @@ server.registerTool(
   {
     title: "Search company career sites",
     description:
-      "Call when `next` says so (after Indeed is used up). For entry-level searches JevJob first reads the community new-grad list (github.com/SimplifyJobs/New-Grad-Positions) and each matching posting from the employer's own system, then searches the career sites Joboid follows. Same checks as Indeed; direct employer apply links. Takes a few seconds to a minute.",
+      "Call when `next` says so, or right away when the Indeed plugin is missing or rate-limited. For entry-level searches JevJob reads the community new-grad list (github.com/SimplifyJobs/New-Grad-Positions) and each matching posting from the employer's own system (plus, when Joboid is installed, the companies it follows). Same checks as Indeed; direct employer apply links. Takes a few seconds to a minute.",
   },
   async () => {
     try {

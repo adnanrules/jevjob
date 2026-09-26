@@ -1,10 +1,10 @@
-// The second source: company career sites, through Joboid. Joboid reads employers' own applicant tracking systems
-// (Greenhouse, Workday, Oracle, iCIMS, …), so these postings come with direct apply links, and it covers employers the
-// Indeed plugin's small index never returns. No LLM tokens: the MCP server runs Joboid itself.
+// The second source: employers' own career sites, with direct apply links, covering employers the Indeed plugin's small
+// index never returns. No LLM tokens: the MCP server reads them itself.
 //
-//   0. Entry-level searches start with the new-grad feed (new-grad-feed.ts): curated new-grad roles at employers
-//      Joboid doesn't follow, read straight from each employer's posting.
-//   1. One Joboid title search over the cached listings (fast; a background refresh keeps the cache current).
+//   0. Entry-level searches start with the new-grad feed (new-grad-feed.ts): curated new-grad roles, each read
+//      straight from the employer's posting. Works for everyone.
+//   Optional, when Joboid (the author's job-search tool) is installed alongside and JOBOID_DIR points at it:
+//   1. One Joboid title search over the companies it follows (fast; a background refresh keeps its cache current).
 //   2. Rank candidates from the listing alone: not seen before, title and level fit, place, date.
 //   3. Fetch full postings best-first and put each through the same checks as Indeed postings (admit).
 //      In-window first; near misses are fetched only when the in-window ones can't fill the batch.
@@ -75,16 +75,15 @@ function candidates(s: Search, listings: Listing[]): Listing[] {
 export async function searchCareerSites(): Promise<CareerSitesSummary> {
   const s = readSearch();
   if (!s) throw new Error("Start a search first (start_search).");
+  const feed = await addFromFeed(s);
+  saveSearch(s);
   const dir = joboidDir();
   if (!dir) {
-    s.careerSites = "unavailable";
+    s.careerSites = "done";
     settle(s);
     saveSearch(s);
-    return { ...jobsSummary(s, 0), matched: 0, examined: 0, feed: { matched: 0, read: 0, added: 0, source: FEED_CREDIT } };
+    return { ...jobsSummary(s, feed.added), matched: 0, examined: 0, feed: { ...feed, source: FEED_CREDIT }, next: nextStep(s) };
   }
-
-  const feed = await addFromFeed(s, dir);
-  saveSearch(s);
 
   // With a date window, ask Joboid only for what could ever be admitted (up to the widest step).
   const requested = searchDays(s.plan);

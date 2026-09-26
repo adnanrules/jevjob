@@ -6,11 +6,12 @@
 //   add_search_results   parse a search_jobs result; drop wrong titles/levels/places/duplicates; hold back
 //                        postings that only miss the date window; answer "fetch these ids"
 //   add_jobs             parse get_job_details (or postings from the model's own web search); final checks; load
-//   search_career_sites  (career-sites.ts) the same checks over Joboid's tracked employer career sites
+//   search_career_sites  (career-sites.ts) the same checks over employers' own career sites
 //
 // When the search runs short, it degrades in a fixed order instead of giving up:
 //   1. An area where Indeed keeps returning postings it already showed is "saturated" and skipped.
-//   2. Once Indeed is used up, Joboid's company career sites are searched (direct employer links).
+//   2. Once Indeed is used up, employers' career sites are searched: the new-grad feed, plus the companies Joboid
+//      follows when it's installed (direct employer links either way).
 //   3. Still short: the "posted within" window widens step by step (7 → 14 → 30 days) and releases the
 //      near misses it held back. Those are tagged, and rank below in-window jobs of the same tier.
 //
@@ -22,7 +23,7 @@ import { normalizeJobs, normalizePosting, type RawJob } from "@jevjob/core";
 import { homeState, placement, searchAreas, type SearchArea } from "./geography";
 import { levelFit, searchDays, titleFit, type SearchPlan } from "./intent";
 import { currentJobs, loadJobs } from "./jobs";
-import { joboidDir, SEARCH_FILE } from "./paths";
+import { SEARCH_FILE } from "./paths";
 import { canonicalUrl, postingKey } from "./posting";
 import { earlyTitleMismatch, jobFitIssue } from "./search-quality";
 
@@ -228,7 +229,7 @@ export function nextStep(s: Search): string {
   if (s.queue.length && need <= 0) return fetch;
   const pending = pendingSearches(s)[0];
   if (pending) return `Search Indeed: search_jobs(search: "${pending.title}", location: "${pending.area.query}", country_code: "US"), then add_search_results.`;
-  if (s.careerSites === "pending") return "Indeed is used up. Call search_career_sites (company career sites through Joboid, direct employer links).";
+  if (s.careerSites === "pending") return "Indeed is used up. Call search_career_sites (employers' own career sites, direct apply links).";
   if (s.queue.length) return `${fetch} Every source is used up after that.`;
   return "Every source is used up. Call open_app and report how many postings loaded and the main skip reasons.";
 }
@@ -261,7 +262,7 @@ export function startSearch(plan: SearchPlan): SearchBrief {
     dry: {},
     dryStreak: 0,
     saturated: [],
-    careerSites: joboidDir() ? "pending" : "unavailable",
+    careerSites: "pending",
   };
   saveSearch(s);
   return brief(s);
@@ -273,7 +274,7 @@ export function moreFromSearch(): SearchBrief {
   if (!s) throw new Error("No search to continue. Start one with start_search.");
   s.target = s.loaded + BATCH_SIZE;
   // Career sites only fetched what the last batch needed; there may be more there now.
-  if (s.careerSites === "done" && joboidDir()) s.careerSites = "pending";
+  if (s.careerSites === "done") s.careerSites = "pending";
   settle(s);
   saveSearch(s);
   return brief(s);

@@ -58,7 +58,8 @@ jevjob/
   resume-vs-posting detail view.
 - [x] **M5 · Harness.** MCP server + CLI (load postings, live Joboid import, open app, headless rank);
   see [harness.md](harness.md).
-- [ ] **M6 · Ship.** Demo video/GIF, push to GitHub, CI green, a fresh held-out set for a clean post-fix number.
+- [x] **M6 · 1.0.** Standalone: career-site readers in TypeScript (no Joboid needed), `npm run setup`, MIT license.
+- [ ] **M7 · Ship.** Demo video/GIF, push to GitHub, CI green, a fresh held-out set for a clean post-fix number.
 
 ## How Jev is used (and why)
 

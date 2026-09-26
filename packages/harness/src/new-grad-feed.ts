@@ -5,18 +5,18 @@
 //   1. Download the list (cached for a few hours). It has no license, so it's read at run time and credited,
 //      never copied into this repo.
 //   2. Filter from the list alone: active, role family, place, date window (near misses held for widening).
-//   3. Read the full postings through Joboid (`joboid postings`, which reads each employer's own API) and put each
-//      through the same checks as every other source (admit). Reading a posting doesn't follow the company.
+//   3. Read each full posting from the employer's own system (readers/: Workday, Greenhouse, Oracle, iCIMS, … or the
+//      page's schema.org JobPosting) and put it through the same checks as every other source (admit).
 import { createHash } from "node:crypto";
 import { existsSync, mkdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
 import path from "node:path";
-import { normalizeJobs, type RawJob } from "@jevjob/core";
+import { normalizeJobs, normalizePosting, type RawJob } from "@jevjob/core";
 import { placement } from "./geography";
 import { admit, ageOf, load, skip, type Search } from "./indeed";
 import { levelFit, titleFit, type SearchPlan } from "./intent";
-import { joboid } from "./joboid";
 import { FEED_CACHE_DIR } from "./paths";
 import { postingKey } from "./posting";
+import { readPostings, type ReadResult } from "./readers";
 
 export const FEED_URL = "https://raw.githubusercontent.com/SimplifyJobs/New-Grad-Positions/dev/.github/scripts/listings.json";
 export const FEED_CREDIT = "github.com/SimplifyJobs/New-Grad-Positions";
@@ -88,34 +88,26 @@ async function loadFeed(): Promise<FeedListing[]> {
   return JSON.parse(text) as FeedListing[];
 }
 
-interface PostingResult {
-  url: string;
-  ok: boolean;
-  error?: string;
-  job?: { id: string; company: string; title: string; location: string; apply_url: string; posting_url: string; posted: string; description: string };
-}
-
-/** Full postings through Joboid, cached per URL for a day so re-runs and "more" don't re-read them. */
-async function readPostings(dir: string, rows: FeedListing[]): Promise<PostingResult[]> {
-  const cacheDir = path.join(FEED_CACHE_DIR, "postings");
+/** Full postings, cached per URL for a day so re-runs and "more" don't re-read them. Closed postings are cached too. */
+async function readCached(rows: FeedListing[]): Promise<ReadResult[]> {
+  // Versioned: a change to ReadResult's shape starts a fresh cache instead of misreading old entries.
+  const cacheDir = path.join(FEED_CACHE_DIR, "postings-v2");
   mkdirSync(cacheDir, { recursive: true });
   const cacheFile = (url: string) => path.join(cacheDir, `${createHash("sha256").update(url).digest("hex").slice(0, 24)}.json`);
   const fresh = (file: string) => existsSync(file) && Date.now() - statSync(file).mtimeMs < 24 * 3_600_000;
 
-  const results = new Map<string, PostingResult>();
+  const results = new Map<string, ReadResult>();
   const todo = rows.filter((r) => {
     const file = cacheFile(r.url);
-    if (fresh(file)) results.set(r.url, JSON.parse(readFileSync(file, "utf8")) as PostingResult);
+    if (fresh(file)) {
+      const cached = JSON.parse(readFileSync(file, "utf8")) as ReadResult;
+      if (cached.ok ? typeof cached.posting?.description === "string" : cached.closed) results.set(r.url, cached);
+    }
     return !results.has(r.url);
   });
-  if (todo.length) {
-    const input = path.join(cacheDir, `batch-${process.pid}.json`);
-    writeFileSync(input, JSON.stringify(todo.map((r) => ({ url: r.url, company: r.company_name }))));
-    const out = (await joboid(dir, ["postings", "--file", input])) as PostingResult[];
-    for (const r of out) {
-      results.set(r.url, r);
-      if (r.ok || /HTTP 40[34]|closed/.test(r.error ?? "")) writeFileSync(cacheFile(r.url), JSON.stringify(r));
-    }
+  for (const r of await readPostings(todo.map((row) => row.url))) {
+    results.set(r.url, r);
+    if (r.ok || r.closed) writeFileSync(cacheFile(r.url), JSON.stringify(r));
   }
   return rows.map((r) => results.get(r.url) ?? { url: r.url, ok: false, error: "not read" });
 }
@@ -132,7 +124,7 @@ export interface FeedStep {
  * Adds new-grad feed postings to the search until the batch is full or the fitting rows run out. Only for
  * entry-level (or any-level) plans: every row in the feed is a new-grad role.
  */
-export async function addFromFeed(s: Search, dir: string): Promise<FeedStep> {
+export async function addFromFeed(s: Search): Promise<FeedStep> {
   if (s.plan.level !== "entry" && s.plan.level !== "any") return { matched: 0, read: 0, added: 0 };
   let listings: FeedListing[];
   try {
@@ -148,23 +140,30 @@ export async function addFromFeed(s: Search, dir: string): Promise<FeedStep> {
   const want = () => s.target - s.loaded - s.queue.length;
   for (let i = 0; i < rows.length && read < MAX_READS && want() > 0; i += BATCH) {
     const batch = rows.slice(i, i + BATCH);
-    const results = await readPostings(dir, batch);
+    const results = await readCached(batch);
     read += batch.length;
     for (const row of batch) seen.add(postingKey({ company: row.company_name, title: row.title, location: (row.locations ?? []).join("; ") }));
     s.seen = [...seen];
 
     const raw = results.flatMap((r) => {
-      if (!r.ok || !r.job) {
-        skip(s, /40[34]|410|closed/.test(r.error ?? "") ? "closed" : "unreadable posting");
+      if (!r.ok) {
+        skip(s, r.closed ? "closed" : "unreadable posting");
         return [];
       }
-      const { job } = r;
-      const row = batch.find((b) => b.url === r.url);
+      const { posting } = r;
+      const row = batch.find((b) => b.url === r.url)!;
       // Some APIs omit the place or date on a single posting; the feed row has both.
-      const location = job.location || (row?.locations ?? []).join("; ");
-      const posted = /^\d{4}-\d{2}-\d{2}/.test(job.posted) ? job.posted.slice(0, 10)
-        : row?.date_posted ? new Date(row.date_posted * 1000).toISOString().slice(0, 10) : null;
-      return [{ ...job, location, posted }];
+      const postedAt = posting.postedAt ?? (row.date_posted ? new Date(row.date_posted * 1000).toISOString().slice(0, 10) : undefined);
+      return [{
+        id: `feed:${createHash("sha256").update(row.url).digest("hex").slice(0, 20)}`,
+        company: row.company_name,
+        title: posting.title || row.title,
+        location: posting.location || (row.locations ?? []).join("; "),
+        applyUrl: posting.applyUrl,
+        postingUrl: posting.postingUrl,
+        description: normalizePosting(posting.description),
+        ...(postedAt && { postedAt }),
+      }];
     });
     const { jobs } = normalizeJobs(raw);
     // The row already passed the role check on title or the feed's own category (feedCandidates).

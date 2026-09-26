@@ -12,13 +12,13 @@ you ─▶ /jevjob junior swe in Chicago this week
         │                                              and answers "fetch these ids"
         ├─ Indeed get_job_details ─▶ add_jobs          full postings: structure rebuilt, 3+ years (entry level),
         │                                              in-state first, loaded into the app
-        ├─ search_career_sites JevJob searches Joboid's employer career sites (direct apply links)
+        ├─ search_career_sites JevJob reads employers' own career sites (direct apply links)
         └─ open_app            the app ranks them with Jev, 50 at a time
 ```
 
-The assistant never judges a posting; it passes tool outputs through. If the Indeed plugin isn't installed (or you
-say "not Indeed"), it uses its own web search instead: it reads individual postings, preferring employer career
-sites, and passes their full text to `add_jobs` as `postings`.
+The assistant never judges a posting; it passes tool outputs through. The Indeed plugin is optional: without it (or
+when it's rate-limited) the assistant goes straight to `search_career_sites`, and if that's still short, uses its own
+web search to read individual postings and pass their full text to `add_jobs` as `postings`.
 
 ## Where it looks
 
@@ -33,19 +33,17 @@ area returns the same ones. So a short search degrades in a fixed order instead 
 
 1. **Saturation.** An Indeed search that adds fewer than 2 new postings is "dry". Two dry searches in a row skip
    that area; four in a row skip every local area and go straight to remote (a different pool).
-2. **Career sites.** Once Indeed is used up, `search_career_sites` does two things, with the same checks as Indeed:
+2. **Career sites.** Once Indeed is used up (or right away without Indeed), `search_career_sites` reads employers'
+   own postings, with the same checks as Indeed:
    - **New-grad feed** (entry-level and any-level searches): the community list
      [SimplifyJobs/New-Grad-Positions](https://github.com/SimplifyJobs/New-Grad-Positions), about a thousand active
      new-grad roles a month, each linking to the employer's own posting. JevJob filters it by role family, place and
-     date, then reads each posting through Joboid's `postings` command, which calls the employer's system directly
-     (Workday, Greenhouse, Lever, Ashby, SmartRecruiters, Workable, Oracle Cloud, iCIMS, Rippling, and the Amazon,
-     Microsoft and IBM search APIs). Reading a posting doesn't make Joboid follow that company. The list has no
-     license, so it's downloaded at run time (cached 6 hours) and credited, never committed here.
-   - **Followed companies:** Joboid's title search over the employers it tracks. It reads Joboid's cache
-     (`start_search` refreshes it in the background) and fetches at most 80 postings per call, in-window first.
-
-   To follow more companies, Joboid's `boards propose` lists the ones currently hiring new grads (with example
-   titles), and `boards add <slugs>` follows only the ones you pick. Nothing is followed automatically.
+     date, then reads each posting from the employer's system (`packages/harness/src/readers/`): the public APIs of
+     Workday, Greenhouse, Lever, Ashby, SmartRecruiters, Workable, Oracle Cloud HCM, iCIMS and Rippling, the Amazon,
+     Microsoft and IBM job search APIs, and schema.org JobPosting data on any other site. Postings are cached for a
+     day. The list has no license, so it's downloaded at run time (cached 6 hours) and credited, never committed here.
+   - **Optional, Joboid's followed companies:** if [Joboid](#optional-joboid) is installed and `JOBOID_DIR` points at
+     it, JevJob also searches the companies it follows (at most 80 postings per call, in-window first).
 3. **Widening.** Still short, and the user gave a "posted within" window? Postings that missed only on date were
    held back all along. The window widens one step at a time (7 → 14 → 30 days; never past 4× the request, or 30
    days for short windows) and releases them. Each carries `outsideWindowDays`, shows a dashed "12d · outside 7d"
@@ -60,13 +58,13 @@ Every tool result reports `saturated` areas and `widenedTo`, so the assistant ca
 | `start_search` | Plans a new search from the user's words; returns the searches to run, in order, and `next` |
 | `add_search_results` | One raw Indeed `search_jobs` output; answers which job ids to fetch |
 | `add_jobs` | Raw Indeed `get_job_details` outputs (`indeed_details`), or web-search postings (`postings`) |
-| `search_career_sites` | Company career sites through Joboid, once `next` asks for it; no arguments |
+| `search_career_sites` | Employers' own career sites and the new-grad list; no arguments |
 | `more_jobs` | Next 50 with the same search, never repeating a posting |
 | `open_app` | Starts the web app if needed; an open app notices new postings and offers to rank them |
 | `rank` | Compact results in chat, for when you don't want the app |
 | `status` / `clear_jobs` | The current pool and search; forget them |
 
-The server also exposes a `jevjob` prompt, and Joboid's `.claude/commands/jevjob.md` makes `/jevjob` in Claude Code.
+The server also exposes a `jevjob` prompt, and `.claude/commands/jevjob.md` makes `/jevjob` in Claude Code.
 
 ## Setup
 
@@ -106,3 +104,10 @@ Enable the Indeed plugin in the same app (Claude: Settings → Connectors; Codex
 
 A terminal can't reach Indeed, so `npm run jevjob -- find "<request>"` searches the companies Joboid tracks
 instead. `load`, `open`, `rank`, `status` and `clear` work the same as the MCP tools.
+
+## Optional: Joboid
+
+Joboid is the author's separate job-search tool (Python); JevJob doesn't need it. With `JOBOID_DIR` set in `.env`,
+`search_career_sites` also searches the companies Joboid follows, and `npm run jevjob -- find "<request>"` searches
+them from a terminal.
+

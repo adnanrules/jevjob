@@ -8,8 +8,7 @@ import { planFromQuery } from "../src/intent";
 import { plainText } from "../src/posting";
 import { entryExperienceIssue, sourceIssue } from "../src/search-quality";
 
-// The search session writes files; keep them away from the real pool. No Joboid either: career sites are
-// "unavailable", so a short search goes straight to widening its window.
+// The search session writes files; keep them away from the real pool, and point Joboid (optional) at nothing.
 process.env.JEVJOB_DATA_DIR = mkdtempSync(path.join(tmpdir(), "jevjob-test-"));
 process.env.JOBOID_DIR = process.env.JEVJOB_DATA_DIR;
 let indeed: typeof import("../src/indeed");
@@ -239,6 +238,10 @@ describe("when the search runs short", () => {
     expect(results.nearMisses).toBe(1);
     expect(results.widenedTo).toBeNull();
     expect(results.skipped["too old"]).toBe(1);
+
+    // Career sites ran and found nothing (that step needs the network; it's exercised in the live checks).
+    const state = indeed.readSearch()!;
+    indeed.saveSearch({ ...state, careerSites: "done" });
 
     // The remaining searches find nothing new, so Chicago saturates and the 10-day-old posting is released.
     let last = results;
