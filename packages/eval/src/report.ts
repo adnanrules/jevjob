@@ -17,8 +17,9 @@ const ROWS: Array<[string, (m: Metrics) => string]> = [
   ["Blocker precision", (m) => formatRate(m.blockerPrecision)],
   ["Requirement checks correct", (m) => formatRate(m.requirementChecks)],
   ["Checked lines not extracted ↓", (m) => String(m.notExtracted)],
-  ["Mean latency per job", (m) => `${m.meanLatencyMs.toFixed(2)} ms`],
+  ["Mean latency per job", (m) => (m.meanLatencyMs === null ? "n/a (cached)" : `${m.meanLatencyMs.toFixed(2)} ms`)],
   ["External calls per job", (m) => m.callsPerJob.toFixed(1)],
+  ["Input tokens per job", (m) => Math.round(m.inputTokensPerJob).toLocaleString("en-US")],
 ];
 
 export function renderMarkdown(info: RunInfo, splits: Record<"test" | "dev" | "all", Metrics>, results: CaseResult[]): string {

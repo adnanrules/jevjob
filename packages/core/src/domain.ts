@@ -93,6 +93,21 @@ export interface AssessedJob {
   assessments: Assessment[];
 }
 
+export interface AssessorResult {
+  assessed: AssessedJob;
+  /** External API calls this job needs (counted even when answered from cache, so cost stays visible). */
+  calls: number;
+  inputTokens: number;
+  /** True when the answer came from a local cache, so its latency isn't a real measurement. */
+  cached: boolean;
+}
+
+/** Anything that turns (resume, job) into facts: rules, Jev, or a mix. The eval and UI only see this. */
+export interface Assessor {
+  name: string;
+  assess(resume: Resume, job: RawJob): Promise<AssessorResult>;
+}
+
 // ── Policy: facts → tier (pure, instant, re-runs on every slider move) ─────
 
 export type Tier = "apply" | "maybe" | "stretch" | "big_stretch" | "no";

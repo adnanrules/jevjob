@@ -67,4 +67,20 @@ jevjob/
 - [x] M1 · Policy: `AssessedJob` + aggressiveness → `RankedJob`, checked against `fixtures/expected.json`
 - [x] M2 · Eval: 40 labeled resume/job pairs, a metrics runner, real baseline numbers for the rules
   (`packages/eval/results/rules.md`)
-- [ ] M3 · Jev: client + schema-validated outputs, plugged in as an eval `System`, compared against `rules`
+- [x] M3 · Jev assessor built and unit-tested with a fake client (`packages/jev`)
+- [ ] M3 · First real `npm run eval -- jev` run (needs `TYPESAFE_API_KEY`), then compare against `rules`
+
+## How Jev is used (and why)
+
+One Jev call per job. The state is the resume; each requirement becomes its own small question, and Jev
+answers all of them in parallel. The design follows TypeSafe's documented limits for Jev 1.13:
+
+| Decision | Why |
+|---|---|
+| Rules still extract requirements | Jev classifies; it doesn't generate text. |
+| Years of experience are compared in code; Jev only judges the *kind* of experience (Noul) | "Jev is not a calculator." |
+| A separate "does this line require anything?" Noul for every required line | Negation ("A degree is not required") is a known weak spot, so it gets its own affirmatively phrased question. |
+| Four verdict labels, including `not_stated` | Separates "resume is silent" (citizenship) from "resume would list it and doesn't" (Kubernetes). |
+| Answers under `JEV_POLICY.minConfidence` become `unclear` | The docs' confidence-routing pattern: don't act on a flat distribution. |
+| Zod validates every answer; bad or missing answers fall back to the rules verdict | A server change degrades to the baseline instead of breaking the UI. |
+| Responses cached by a hash of (model, state, questions) | Re-running the eval costs nothing; any prompt change invalidates the cache automatically. |

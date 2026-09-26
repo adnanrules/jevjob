@@ -11,6 +11,9 @@ export interface CaseResult {
   latencyMs: number;
   /** External API calls made for this case (0 for rules). */
   calls: number;
+  inputTokens: number;
+  /** Answered from the local cache: counts toward calls and tokens, but not latency. */
+  cached: boolean;
 }
 
 /** A count, never a bare percentage: "3 of 12" tells you how much to trust it; "25%" hides that. */
@@ -32,8 +35,10 @@ export interface Metrics {
   requirementChecks: Rate;
   /** Checks where extraction produced no requirement for that line at all. */
   notExtracted: number;
-  meanLatencyMs: number;
+  /** Over cases that weren't cached; null when every case came from the cache. */
+  meanLatencyMs: number | null;
   callsPerJob: number;
+  inputTokensPerJob: number;
   /** confusion[expected][predicted] = count. */
   confusion: Record<Tier, Record<Tier, number>>;
 }
@@ -67,6 +72,7 @@ export function computeMetrics(results: CaseResult[]): Metrics {
   for (const r of results) confusion[r.expected.tier][r.predicted.tier]++;
 
   const n = results.length;
+  const timed = results.filter((r) => !r.cached);
   return {
     cases: n,
     tierAccuracy: rate((r) => tierDistance(r) === 0),
@@ -77,8 +83,9 @@ export function computeMetrics(results: CaseResult[]): Metrics {
     blockerPrecision: { hits: blockerHits, of: predictedBlockers },
     requirementChecks: { hits: checks.filter((c) => c.predicted === c.expected).length, of: checks.length },
     notExtracted: checks.filter((c) => c.predicted === null).length,
-    meanLatencyMs: n ? results.reduce((s, r) => s + r.latencyMs, 0) / n : 0,
+    meanLatencyMs: timed.length ? timed.reduce((s, r) => s + r.latencyMs, 0) / timed.length : null,
     callsPerJob: n ? results.reduce((s, r) => s + r.calls, 0) / n : 0,
+    inputTokensPerJob: n ? results.reduce((s, r) => s + r.inputTokens, 0) / n : 0,
     confusion,
   };
 }

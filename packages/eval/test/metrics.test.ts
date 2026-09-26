@@ -10,6 +10,8 @@ const result = (expected: Tier, predicted: Tier, extra: Partial<CaseResult> = {}
   checks: [],
   latencyMs: 1,
   calls: 0,
+  inputTokens: 0,
+  cached: false,
   ...extra,
 });
 
@@ -63,6 +65,16 @@ describe("computeMetrics", () => {
   it("never divides by zero", () => {
     const m = computeMetrics([]);
     expect(formatRate(m.tierAccuracy)).toBe("n/a");
-    expect(m.meanLatencyMs).toBe(0);
+    expect(m.meanLatencyMs).toBeNull();
+  });
+
+  it("leaves cached cases out of latency but keeps them in cost", () => {
+    const m = computeMetrics([
+      result("apply", "apply", { latencyMs: 400, calls: 1, inputTokens: 900 }),
+      result("apply", "apply", { latencyMs: 1, calls: 1, inputTokens: 900, cached: true }),
+    ]);
+    expect(m.meanLatencyMs).toBe(400);
+    expect(m.callsPerJob).toBe(1);
+    expect(m.inputTokensPerJob).toBe(900);
   });
 });

@@ -1,6 +1,6 @@
 {
   "system": "rules",
-  "commit": "7923a6f",
+  "commit": "d9f5e59",
   "dirty": true,
   "splits": {
     "test": {
@@ -34,8 +34,9 @@
         "of": 24
       },
       "notExtracted": 0,
-      "meanLatencyMs": 0.07569999999999806,
+      "meanLatencyMs": 0.07531999999999682,
       "callsPerJob": 0,
+      "inputTokensPerJob": 0,
       "confusion": {
         "apply": {
           "apply": 6,
@@ -105,8 +106,9 @@
         "of": 6
       },
       "notExtracted": 0,
-      "meanLatencyMs": 0.3922600000000017,
+      "meanLatencyMs": 0.39861999999999964,
       "callsPerJob": 0,
+      "inputTokensPerJob": 0,
       "confusion": {
         "apply": {
           "apply": 1,
@@ -176,8 +178,9 @@
         "of": 30
       },
       "notExtracted": 0,
-      "meanLatencyMs": 0.11526999999999851,
+      "meanLatencyMs": 0.11573249999999717,
       "callsPerJob": 0,
+      "inputTokensPerJob": 0,
       "confusion": {
         "apply": {
           "apply": 7,
@@ -236,8 +239,10 @@
           "predicted": "meets"
         }
       ],
-      "latencyMs": 1.4561999999999955,
-      "calls": 0
+      "latencyMs": 1.4699999999999989,
+      "calls": 0,
+      "inputTokens": 0,
+      "cached": false
     },
     {
       "id": "jordan/prairie-health-tech:fixture:2002",
@@ -262,8 +267,10 @@
           "predicted": "unclear"
         }
       ],
-      "latencyMs": 0.22509999999999764,
-      "calls": 0
+      "latencyMs": 0.24190000000001532,
+      "calls": 0,
+      "inputTokens": 0,
+      "cached": false
     },
     {
       "id": "jordan/northbrook-robotics:fixture:3003",
@@ -283,8 +290,10 @@
           "predicted": "does_not_meet"
         }
       ],
-      "latencyMs": 0.1268000000000029,
-      "calls": 0
+      "latencyMs": 0.11959999999999127,
+      "calls": 0,
+      "inputTokens": 0,
+      "cached": false
     },
     {
       "id": "jordan/riverline-capital:fixture:4004",
@@ -298,8 +307,10 @@
         "blockers": []
       },
       "checks": [],
-      "latencyMs": 0.07370000000000232,
-      "calls": 0
+      "latencyMs": 0.07589999999999009,
+      "calls": 0,
+      "inputTokens": 0,
+      "cached": false
     },
     {
       "id": "jordan/loop-defense-systems:fixture:5005",
@@ -330,8 +341,10 @@
           "predicted": "does_not_meet"
         }
       ],
-      "latencyMs": 0.07950000000001012,
-      "calls": 0
+      "latencyMs": 0.08570000000000277,
+      "calls": 0,
+      "inputTokens": 0,
+      "cached": false
     },
     {
       "id": "jordan/wabash-analytics:eval:6006",
@@ -351,8 +364,10 @@
           "predicted": "unclear"
         }
       ],
-      "latencyMs": 0.07139999999999702,
-      "calls": 0
+      "latencyMs": 0.06599999999997408,
+      "calls": 0,
+      "inputTokens": 0,
+      "cached": false
     },
     {
       "id": "jordan/cardinal-cloud:eval:7007",
@@ -366,8 +381,10 @@
         "blockers": []
       },
       "checks": [],
-      "latencyMs": 0.06430000000000291,
-      "calls": 0
+      "latencyMs": 0.07099999999999795,
+      "calls": 0,
+      "inputTokens": 0,
+      "cached": false
     },
     {
       "id": "jordan/harbor-point-health:eval:8008",
@@ -392,8 +409,10 @@
           "predicted": "meets"
         }
       ],
-      "latencyMs": 0.06770000000000209,
-      "calls": 0
+      "latencyMs": 0.06889999999998508,
+      "calls": 0,
+      "inputTokens": 0,
+      "cached": false
     },
     {
       "id": "jordan/meridian-bank:eval:9009",
@@ -413,8 +432,10 @@
           "predicted": "unclear"
         }
       ],
-      "latencyMs": 0.06029999999999802,
-      "calls": 0
+      "latencyMs": 0.05930000000000746,
+      "calls": 0,
+      "inputTokens": 0,
+      "cached": false
     },
     {
       "id": "jordan/northwind-ai:eval:1010",
@@ -428,8 +449,10 @@
         "blockers": []
       },
       "checks": [],
-      "latencyMs": 0.0642999999999887,
-      "calls": 0
+      "latencyMs": 0.06720000000001392,
+      "calls": 0,
+      "inputTokens": 0,
+      "cached": false
     },
     {
       "id": "priya/lakeshore-logistics:fixture:1001",
@@ -449,8 +472,10 @@
           "predicted": "does_not_meet"
         }
       ],
-      "latencyMs": 0.10299999999999443,
-      "calls": 0
+      "latencyMs": 0.09319999999999595,
+      "calls": 0,
+      "inputTokens": 0,
+      "cached": false
     },
     {
       "id": "priya/prairie-health-tech:fixture:2002",
@@ -475,8 +500,10 @@
           "predicted": "meets"
         }
       ],
-      "latencyMs": 0.061699999999987654,
-      "calls": 0
+      "latencyMs": 0.06419999999999959,
+      "calls": 0,
+      "inputTokens": 0,
+      "cached": false
     },
     {
       "id": "priya/northbrook-robotics:fixture:3003",
@@ -490,8 +517,10 @@
         "blockers": []
       },
       "checks": [],
-      "latencyMs": 0.3363999999999976,
-      "calls": 0
+      "latencyMs": 0.04830000000001178,
+      "calls": 0,
+      "inputTokens": 0,
+      "cached": false
     },
     {
       "id": "priya/riverline-capital:fixture:4004",
@@ -505,8 +534,10 @@
         "blockers": []
       },
       "checks": [],
-      "latencyMs": 0.06199999999999761,
-      "calls": 0
+      "latencyMs": 0.04989999999997963,
+      "calls": 0,
+      "inputTokens": 0,
+      "cached": false
     },
     {
       "id": "priya/loop-defense-systems:fixture:5005",
@@ -526,8 +557,10 @@
         ]
       },
       "checks": [],
-      "latencyMs": 0.06280000000000996,
-      "calls": 0
+      "latencyMs": 0.05299999999999727,
+      "calls": 0,
+      "inputTokens": 0,
+      "cached": false
     },
     {
       "id": "priya/wabash-analytics:eval:6006",
@@ -541,8 +574,10 @@
         "blockers": []
       },
       "checks": [],
-      "latencyMs": 0.05089999999999861,
-      "calls": 0
+      "latencyMs": 0.8052000000000135,
+      "calls": 0,
+      "inputTokens": 0,
+      "cached": false
     },
     {
       "id": "priya/cardinal-cloud:eval:7007",
@@ -556,8 +591,10 @@
         "blockers": []
       },
       "checks": [],
-      "latencyMs": 0.04540000000000077,
-      "calls": 0
+      "latencyMs": 0.08089999999998554,
+      "calls": 0,
+      "inputTokens": 0,
+      "cached": false
     },
     {
       "id": "priya/harbor-point-health:eval:8008",
@@ -582,8 +619,10 @@
           "predicted": "unclear"
         }
       ],
-      "latencyMs": 0.04399999999999693,
-      "calls": 0
+      "latencyMs": 0.05279999999999063,
+      "calls": 0,
+      "inputTokens": 0,
+      "cached": false
     },
     {
       "id": "priya/meridian-bank:eval:9009",
@@ -597,8 +636,10 @@
         "blockers": []
       },
       "checks": [],
-      "latencyMs": 0.037800000000004275,
-      "calls": 0
+      "latencyMs": 0.04529999999999745,
+      "calls": 0,
+      "inputTokens": 0,
+      "cached": false
     },
     {
       "id": "priya/northwind-ai:eval:1010",
@@ -623,8 +664,10 @@
           "predicted": "meets"
         }
       ],
-      "latencyMs": 0.057699999999996976,
-      "calls": 0
+      "latencyMs": 0.08209999999999695,
+      "calls": 0,
+      "inputTokens": 0,
+      "cached": false
     },
     {
       "id": "marcus/lakeshore-logistics:fixture:1001",
@@ -638,8 +681,10 @@
         "blockers": []
       },
       "checks": [],
-      "latencyMs": 0.05749999999999034,
-      "calls": 0
+      "latencyMs": 0.0589000000000226,
+      "calls": 0,
+      "inputTokens": 0,
+      "cached": false
     },
     {
       "id": "marcus/prairie-health-tech:fixture:2002",
@@ -659,8 +704,10 @@
           "predicted": "does_not_meet"
         }
       ],
-      "latencyMs": 0.1950999999999965,
-      "calls": 0
+      "latencyMs": 0.051000000000016144,
+      "calls": 0,
+      "inputTokens": 0,
+      "cached": false
     },
     {
       "id": "marcus/northbrook-robotics:fixture:3003",
@@ -680,8 +727,10 @@
           "predicted": "does_not_meet"
         }
       ],
-      "latencyMs": 0.08849999999999625,
-      "calls": 0
+      "latencyMs": 0.06579999999999586,
+      "calls": 0,
+      "inputTokens": 0,
+      "cached": false
     },
     {
       "id": "marcus/riverline-capital:fixture:4004",
@@ -695,8 +744,10 @@
         "blockers": []
       },
       "checks": [],
-      "latencyMs": 0.05469999999999686,
-      "calls": 0
+      "latencyMs": 0.046999999999997044,
+      "calls": 0,
+      "inputTokens": 0,
+      "cached": false
     },
     {
       "id": "marcus/loop-defense-systems:fixture:5005",
@@ -722,8 +773,10 @@
           "predicted": "meets"
         }
       ],
-      "latencyMs": 0.050600000000002865,
-      "calls": 0
+      "latencyMs": 0.04999999999998295,
+      "calls": 0,
+      "inputTokens": 0,
+      "cached": false
     },
     {
       "id": "marcus/wabash-analytics:eval:6006",
@@ -737,8 +790,10 @@
         "blockers": []
       },
       "checks": [],
-      "latencyMs": 0.04840000000000089,
-      "calls": 0
+      "latencyMs": 0.050199999999989586,
+      "calls": 0,
+      "inputTokens": 0,
+      "cached": false
     },
     {
       "id": "marcus/cardinal-cloud:eval:7007",
@@ -763,8 +818,10 @@
           "predicted": "unclear"
         }
       ],
-      "latencyMs": 0.0490999999999957,
-      "calls": 0
+      "latencyMs": 0.052099999999995816,
+      "calls": 0,
+      "inputTokens": 0,
+      "cached": false
     },
     {
       "id": "marcus/harbor-point-health:eval:8008",
@@ -778,8 +835,10 @@
         "blockers": []
       },
       "checks": [],
-      "latencyMs": 0.04070000000000107,
-      "calls": 0
+      "latencyMs": 0.03999999999999204,
+      "calls": 0,
+      "inputTokens": 0,
+      "cached": false
     },
     {
       "id": "marcus/meridian-bank:eval:9009",
@@ -799,8 +858,10 @@
           "predicted": "unclear"
         }
       ],
-      "latencyMs": 0.046799999999990405,
-      "calls": 0
+      "latencyMs": 0.041100000000000136,
+      "calls": 0,
+      "inputTokens": 0,
+      "cached": false
     },
     {
       "id": "marcus/northwind-ai:eval:1010",
@@ -814,8 +875,10 @@
         "blockers": []
       },
       "checks": [],
-      "latencyMs": 0.04619999999999891,
-      "calls": 0
+      "latencyMs": 0.04240000000001487,
+      "calls": 0,
+      "inputTokens": 0,
+      "cached": false
     },
     {
       "id": "elena/lakeshore-logistics:fixture:1001",
@@ -835,8 +898,10 @@
           "predicted": "meets"
         }
       ],
-      "latencyMs": 0.054199999999994475,
-      "calls": 0
+      "latencyMs": 0.0508999999999844,
+      "calls": 0,
+      "inputTokens": 0,
+      "cached": false
     },
     {
       "id": "elena/prairie-health-tech:fixture:2002",
@@ -850,8 +915,10 @@
         "blockers": []
       },
       "checks": [],
-      "latencyMs": 0.04779999999999518,
-      "calls": 0
+      "latencyMs": 0.04339999999999122,
+      "calls": 0,
+      "inputTokens": 0,
+      "cached": false
     },
     {
       "id": "elena/northbrook-robotics:fixture:3003",
@@ -865,8 +932,10 @@
         "blockers": []
       },
       "checks": [],
-      "latencyMs": 0.37180000000000746,
-      "calls": 0
+      "latencyMs": 0.03910000000001901,
+      "calls": 0,
+      "inputTokens": 0,
+      "cached": false
     },
     {
       "id": "elena/riverline-capital:fixture:4004",
@@ -891,8 +960,10 @@
           "predicted": "meets"
         }
       ],
-      "latencyMs": 0.05889999999999418,
-      "calls": 0
+      "latencyMs": 0.05310000000000059,
+      "calls": 0,
+      "inputTokens": 0,
+      "cached": false
     },
     {
       "id": "elena/loop-defense-systems:fixture:5005",
@@ -912,8 +983,10 @@
         ]
       },
       "checks": [],
-      "latencyMs": 0.044999999999987494,
-      "calls": 0
+      "latencyMs": 0.043000000000006366,
+      "calls": 0,
+      "inputTokens": 0,
+      "cached": false
     },
     {
       "id": "elena/wabash-analytics:eval:6006",
@@ -938,8 +1011,10 @@
           "predicted": "meets"
         }
       ],
-      "latencyMs": 0.04249999999998977,
-      "calls": 0
+      "latencyMs": 0.04229999999998313,
+      "calls": 0,
+      "inputTokens": 0,
+      "cached": false
     },
     {
       "id": "elena/cardinal-cloud:eval:7007",
@@ -953,8 +1028,10 @@
         "blockers": []
       },
       "checks": [],
-      "latencyMs": 0.04020000000001289,
-      "calls": 0
+      "latencyMs": 0.04149999999998499,
+      "calls": 0,
+      "inputTokens": 0,
+      "cached": false
     },
     {
       "id": "elena/harbor-point-health:eval:8008",
@@ -968,8 +1045,10 @@
         "blockers": []
       },
       "checks": [],
-      "latencyMs": 0.039699999999996294,
-      "calls": 0
+      "latencyMs": 0.03869999999997731,
+      "calls": 0,
+      "inputTokens": 0,
+      "cached": false
     },
     {
       "id": "elena/meridian-bank:eval:9009",
@@ -990,7 +1069,9 @@
         }
       ],
       "latencyMs": 0.03550000000001319,
-      "calls": 0
+      "calls": 0,
+      "inputTokens": 0,
+      "cached": false
     },
     {
       "id": "elena/northwind-ai:eval:1010",
@@ -1010,8 +1091,10 @@
           "predicted": "meets"
         }
       ],
-      "latencyMs": 0.046599999999997976,
-      "calls": 0
+      "latencyMs": 0.042899999999974625,
+      "calls": 0,
+      "inputTokens": 0,
+      "cached": false
     }
   ]
 }
