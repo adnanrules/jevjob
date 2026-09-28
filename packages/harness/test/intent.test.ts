@@ -39,6 +39,23 @@ describe("levelFit", () => {
   });
 });
 
+describe("role families and senior levels", () => {
+  it("expands a specialty into the ways employers title it", () => {
+    const plan = planFromQuery("senior backend engineer in NYC");
+    expect(plan.level).toBe("senior");
+    expect(plan.titles).toEqual(expect.arrayContaining(["backend developer", "software engineer backend"]));
+    expect(planFromQuery("ios developer in Austin").titles).toContain("mobile engineer");
+  });
+
+  it("counts level III and up as senior, but not II", () => {
+    const senior = { level: "senior" as const };
+    expect(levelFit("Senior Software Engineer, Backend", senior)).toBe(2);
+    expect(levelFit("Software Engineer III", senior)).toBe(1);
+    expect(levelFit("Software Engineer II", senior)).toBeNull();
+    expect(levelFit("Backend Engineer", senior)).toBeNull();
+  });
+});
+
 describe("places in a request", () => {
   it("keeps the place as typed and reads a radius", () => {
     expect(planFromQuery("junior software engineer in Raleigh, NC")).toMatchObject({ locations: ["raleigh, nc"] });

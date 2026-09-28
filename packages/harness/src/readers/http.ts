@@ -3,7 +3,7 @@ import { plainText } from "../posting";
 
 // A browser-like user agent: some career-site firewalls (iCIMS) refuse anything that names a bot.
 const HEADERS = { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/130 Safari/537.36", Accept: "*/*" };
-const TIMEOUT_MS = 20_000;
+const TIMEOUT_MS = 12_000;
 
 export class HttpError extends Error {
   constructor(readonly status: number, url: string) {

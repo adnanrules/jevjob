@@ -13,16 +13,24 @@ import path from "node:path";
 import { normalizeJobs, normalizePosting, type RawJob } from "@jevjob/core";
 import { placement, placeRank } from "./geography";
 import { admit, ageOf, load, skip, type Search } from "./indeed";
-import { levelFit, titleFit, type SearchPlan } from "./intent";
+import { titleFit, type SearchPlan } from "./intent";
 import { FEED_CACHE_DIR } from "./paths";
 import { postingKey } from "./posting";
 import { readPostings, type ReadResult } from "./readers";
 
-export const FEED_URL = "https://raw.githubusercontent.com/SimplifyJobs/New-Grad-Positions/dev/.github/scripts/listings.json";
+/** A batch of reads can take one request timeout (12 s); don't start one this close to the deadline. */
+const START_BY_MS = 10_000;
+
+/** The community lists. New-grad rows are a source; both lists also tell boards.ts which employers hire tech people. */
+export const FEEDS = {
+  "new-grad": "https://raw.githubusercontent.com/SimplifyJobs/New-Grad-Positions/dev/.github/scripts/listings.json",
+  internships: "https://raw.githubusercontent.com/SimplifyJobs/Summer2027-Internships/dev/.github/scripts/listings.json",
+} as const;
+export type FeedName = keyof typeof FEEDS;
 export const FEED_CREDIT = "github.com/SimplifyJobs/New-Grad-Positions";
 const FEED_MAX_AGE_MS = 6 * 3_600_000;
-/** Postings read per `joboid postings` call (it reads them concurrently), and at most per search step. */
-const BATCH = 25;
+/** Postings read per batch (read concurrently), and at most per search step. */
+const BATCH = 16;
 const MAX_READS = 100;
 
 export interface FeedListing {
@@ -65,7 +73,9 @@ export function feedCandidates(s: Search, listings: FeedListing[]): FeedListing[
     const location = (l.locations ?? []).join("; ");
     if (seen.has(postingKey({ company: l.company_name, title: l.title, location }))) return [];
     if (!titleFit(l.title, s.plan) && !(l.category && categories.has(l.category))) return [];
-    if (levelFit(l.title, s.plan) === null) return [];
+    // The list is new-grad by definition, and some employers title new-grad roles "Engineer II", so only unmistakably
+    // senior words are rejected here.
+    if (/\b(senior|sr\.?|staff|principal|lead|manager|director|head of)\b/i.test(l.title)) return [];
     const where = placement(location, s.plan);
     if (where === "no") return [];
     const posted = l.date_posted ? new Date(l.date_posted * 1000).toISOString().slice(0, 10) : undefined;
@@ -77,19 +87,20 @@ export function feedCandidates(s: Search, listings: FeedListing[]): FeedListing[
   return scored.map((x) => x.l);
 }
 
-async function loadFeed(): Promise<FeedListing[]> {
+/** A community list, cached on disk for a few hours. */
+export async function loadFeed(name: FeedName = "new-grad"): Promise<FeedListing[]> {
   mkdirSync(FEED_CACHE_DIR, { recursive: true });
-  const file = path.join(FEED_CACHE_DIR, "new-grad.json");
+  const file = path.join(FEED_CACHE_DIR, `${name}.json`);
   if (existsSync(file) && Date.now() - statSync(file).mtimeMs < FEED_MAX_AGE_MS) return JSON.parse(readFileSync(file, "utf8")) as FeedListing[];
-  const res = await fetch(FEED_URL);
-  if (!res.ok) throw new Error(`New-grad feed: HTTP ${res.status}`);
+  const res = await fetch(FEEDS[name]);
+  if (!res.ok) throw new Error(`${name} feed: HTTP ${res.status}`);
   const text = await res.text();
   writeFileSync(file, text);
   return JSON.parse(text) as FeedListing[];
 }
 
 /** Full postings, cached per URL for a day so re-runs and "more" don't re-read them. Closed postings are cached too. */
-async function readCached(rows: FeedListing[]): Promise<ReadResult[]> {
+export async function readCached(rows: Array<{ url: string }>): Promise<ReadResult[]> {
   // Versioned: a change to ReadResult's shape starts a fresh cache instead of misreading old entries.
   const cacheDir = path.join(FEED_CACHE_DIR, "postings-v2");
   mkdirSync(cacheDir, { recursive: true });
@@ -124,7 +135,7 @@ export interface FeedStep {
  * Adds new-grad feed postings to the search until the batch is full or the fitting rows run out. Only for
  * entry-level (or any-level) plans: every row in the feed is a new-grad role.
  */
-export async function addFromFeed(s: Search): Promise<FeedStep> {
+export async function addFromFeed(s: Search, deadline = Infinity): Promise<FeedStep> {
   if (s.plan.level !== "entry" && s.plan.level !== "any") return { matched: 0, read: 0, added: 0 };
   let listings: FeedListing[];
   try {
@@ -138,7 +149,7 @@ export async function addFromFeed(s: Search): Promise<FeedStep> {
   let read = 0;
   let added = 0;
   const want = () => s.target - s.loaded - s.queue.length;
-  for (let i = 0; i < rows.length && read < MAX_READS && want() > 0; i += BATCH) {
+  for (let i = 0; i < rows.length && read < MAX_READS && want() > 0 && Date.now() < deadline - START_BY_MS; i += BATCH) {
     const batch = rows.slice(i, i + BATCH);
     const results = await readCached(batch);
     read += batch.length;
@@ -166,7 +177,7 @@ export async function addFromFeed(s: Search): Promise<FeedStep> {
       }];
     });
     const { jobs } = normalizeJobs(raw);
-    // The row already passed the role check on title or the feed's own category (feedCandidates).
+    // The row already passed the role check on title or the feed's own category, and the list vouches for the level.
     const admitted = jobs.flatMap((job: RawJob) => admit(s, job, { requirePlace: true, roleChecked: true }) ?? []);
     added += load(s, admitted.slice(0, Math.max(0, s.target - s.loaded)));
   }

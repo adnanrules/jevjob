@@ -20,8 +20,9 @@ list in five tiers, with every requirement marked green, yellow or red.
 
 - 🟢 **Apply** · 🟡 **Maybe** · 🟠 **Stretch** · 🔴 **Big stretch** · 🟥 **No**. The color of the rank number is the tier.
 - **See why.** Each requirement sits next to the resume line that proves it, or shows that nothing does.
-- **Real postings, direct links.** Straight from employers' systems (Workday, Greenhouse, Lever, Ashby, Oracle,
-  iCIMS, and more), plus the Indeed plugin if you have it. Apply links go to the company, not a job board.
+- **Real postings, direct links.** Straight from the job boards of ~4,500 employers that hire tech people
+  (Workday, Greenhouse, Lever, Ashby, Oracle, iCIMS, and more), at any level, plus the Indeed plugin if you have it.
+  Apply links go to the company, not a job board.
 - **One slider** from *Conservative* to *Apply anyway* re-ranks instantly, with no AI calls.
 - **Never a "chance of being hired."** JevJob reports which requirements you meet, and how sure it is.
 

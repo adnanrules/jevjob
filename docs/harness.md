@@ -38,30 +38,44 @@ Indeed searches follow the same order: the city, the three largest cities within
 miles apart so each search covers new ground), the state, then remote. Say "only in Chicago" (`strict_location`) to
 stay within the radius.
 
-## When the search runs short
+## Where postings come from
 
-The Indeed plugin draws from a small index: it returns 10 postings per search, and past a point every search in an
-area returns the same ones. So a short search degrades in a fixed order instead of stopping at 2 postings:
+`search_career_sites` runs first, because employers' own sites are fast, have no rate limits, and give direct apply
+links. Indeed (if the assistant has it) tops up what's still missing. Every source goes through the same checks:
+title and level, place, date window, 3+ years of experience for entry-level searches, duplicates.
 
-1. **Saturation.** An Indeed search that adds fewer than 2 new postings is "dry". Two dry searches in a row skip
-   that area; four in a row skip every local area and go straight to remote (a different pool).
-2. **Career sites.** Once Indeed is used up (or right away without Indeed), `search_career_sites` reads employers'
-   own postings, with the same checks as Indeed:
-   - **New-grad feed** (entry-level and any-level searches): the community list
-     [SimplifyJobs/New-Grad-Positions](https://github.com/SimplifyJobs/New-Grad-Positions), about a thousand active
-     new-grad roles a month, each linking to the employer's own posting. JevJob filters it by role family, place and
-     date, then reads each posting from the employer's system (`packages/harness/src/readers/`): the public APIs of
-     Workday, Greenhouse, Lever, Ashby, SmartRecruiters, Workable, Oracle Cloud HCM, iCIMS and Rippling, the Amazon,
-     Microsoft and IBM job search APIs, and schema.org JobPosting data on any other site. Postings are cached for a
-     day. The list has no license, so it's downloaded at run time (cached 6 hours) and credited, never committed here.
-   - **Optional, Joboid's followed companies:** if [Joboid](#optional-joboid) is installed and `JOBOID_DIR` points at
-     it, JevJob also searches the companies it follows (at most 80 postings per call, in-window first).
-3. **Widening.** Still short, and the user gave a "posted within" window? Postings that missed only on date were
-   held back all along. The window widens one step at a time (7 → 14 → 30 days; never past 4× the request, or 30
-   days for short windows) and releases them. Each carries `outsideWindowDays`, shows a dashed "12d · outside 7d"
-   tag in the app, and ranks below in-window jobs of the same tier. A step that would add nothing isn't taken.
+1. **New-grad list** (entry-level and any-level searches): the community list
+   [SimplifyJobs/New-Grad-Positions](https://github.com/SimplifyJobs/New-Grad-Positions), about a thousand active
+   new-grad roles a month. Every row is new-grad, so its level is trusted (some employers title new-grad roles
+   "Engineer II"); only unmistakably senior titles are dropped. The list has no license, so it's downloaded at run
+   time (cached 6 hours) and credited, never committed here.
+2. **Company boards** (`boards.ts`, every search, any level): the new-grad and internship lists link to about 4,500
+   employers' own job boards on Greenhouse, Lever, Ashby, SmartRecruiters, Workable, Rippling and Workday. That's a
+   directory of employers that hire tech people, and where they've hired. For a search, JevJob picks the boards that
+   hire near you, in your state, or remotely (up to ~570), pulls every open job from each board's public API (cached 12
+   hours; `start_search` starts this in the background), and keeps the ones that fit. This is what makes senior, IT,
+   data and other non-new-grad searches work.
+3. **Optional, Joboid's followed companies:** if [Joboid](#optional-joboid) is installed and `JOBOID_DIR` points at
+   it, JevJob also searches the companies it follows.
+4. **Indeed** tops up. An Indeed search that adds nothing usable is "dry"; two dry searches in a row skip that area.
 
-Every tool result reports `saturated` areas and `widenedTo`, so the assistant can say why a batch is short.
+Full postings are read from the employer's system (`packages/harness/src/readers/`): the public APIs of Workday,
+Greenhouse, Lever, Ashby, SmartRecruiters, Workable, Oracle Cloud HCM, iCIMS and Rippling; the Amazon, Microsoft, IBM
+and Apple job APIs; schema.org JobPosting data; and for server-rendered pages without it (TikTok, Google, TalentBrew
+sites) the posting's own sections, from its first heading to where the page's chrome resumes. Read postings are
+cached for a day.
+
+**Time limit.** One `search_career_sites` call stops after about 40 seconds (assistants usually allow a tool about a
+minute) and keeps what it found; `next` then says to call it again, up to three passes. Nothing is read twice.
+
+**Widening.** Still short, and the user gave a "posted within" window? Postings that missed only on date were held
+back all along. The window widens one step at a time (7 → 14 → 30 days; never past 4× the request, or 30 days for
+short windows) and releases them. Each carries `outsideWindowDays`, shows a dashed "12d · outside 7d" tag in the app,
+and ranks below in-window jobs of the same tier.
+
+`npm run bench:search` runs a fixed set of searches (Chicago junior SWE, Austin entry data analyst, remote new-grad ML,
+Seattle SWE, NYC senior backend, Denver IT support, Raleigh data engineer) the way a new user would, and reports what
+each finds, so changes to search can be compared.
 
 ## Tools
 
@@ -70,7 +84,7 @@ Every tool result reports `saturated` areas and `widenedTo`, so the assistant ca
 | `start_search` | Plans a new search from the user's words; returns the searches to run, in order, and `next` |
 | `add_search_results` | One raw Indeed `search_jobs` output; answers which job ids to fetch |
 | `add_jobs` | Raw Indeed `get_job_details` outputs (`indeed_details`), or web-search postings (`postings`) |
-| `search_career_sites` | Employers' own career sites and the new-grad list; no arguments |
+| `search_career_sites` | Employers' own sites: the new-grad list and ~4,500 company boards. `indeed_unavailable: true` skips Indeed |
 | `more_jobs` | Next 50 with the same search, never repeating a posting |
 | `open_app` | Starts the web app if needed; an open app notices new postings and offers to rank them |
 | `rank` | Compact results in chat, for when you don't want the app |

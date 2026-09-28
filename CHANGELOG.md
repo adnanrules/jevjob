@@ -1,5 +1,35 @@
 # Changelog
 
+## 1.2.0
+
+Search, measured with the new `npm run bench:search` (7 searches the way a new user runs them: no Indeed, no Joboid).
+
+| Search | 1.1.0 | 1.2.0 |
+|---|---|---|
+| Chicago junior software engineer | 13 | 36 |
+| Austin entry-level data analyst | 26 | 41 |
+| Remote new-grad ML engineer | 8 | 14 |
+| Seattle software engineer (any level) | 35 | 50 |
+| NYC senior backend engineer | 0 | 24 |
+| Denver IT support | 0 | 19 |
+| Raleigh data engineer | 30 | 50 |
+
+(Postings loaded, out of 50, all within the requested 30 days. Live data, so exact numbers drift day to day.)
+
+- **Company boards.** A new source that works at any level: the ~4,500 employer job boards the community lists link
+  to (Greenhouse, Lever, Ashby, SmartRecruiters, Workable, Rippling, Workday). JevJob pulls the ones that hire near
+  you, in your state or remotely, and keeps the jobs that fit. Senior, IT and other non-new-grad searches used to find
+  nothing from employers' sites.
+- **Career sites first.** `search_career_sites` now runs before Indeed (fast, no rate limits, direct links); Indeed
+  tops up. `indeed_unavailable: true` skips Indeed for assistants without it, so date-window widening still works.
+- **More postings readable:** TikTok, ByteDance, Google, L3Harris and other server-rendered pages (read from the
+  posting's own sections), and Apple (its job API).
+- **New-grad list:** "Engineer II" new-grad roles are no longer rejected as too senior; the list vouches for the level.
+- **Role families** for backend, frontend, full-stack, mobile, security, embedded, product and solutions roles, and
+  "Engineer III" and up count as senior.
+- **Time budget:** one `search_career_sites` call stays under about 40 seconds and continues on the next call, so
+  assistants with a one-minute tool limit never time out.
+
 ## 1.1.0
 
 - **Any US city or state.** "Near you" is now measured by distance on a map of every US city, town and township

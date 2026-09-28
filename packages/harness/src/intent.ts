@@ -47,11 +47,30 @@ const ROLE_TITLES: Record<string, string[]> = {
   "it support": ["it support", "help desk", "helpdesk", "desktop support", "service desk", "technical support", "it specialist", "it technician", "support technician"],
   "qa engineer": ["qa engineer", "quality assurance engineer", "test engineer", "sdet", "software engineer in test", "qa analyst"],
   "devops engineer": ["devops engineer", "site reliability engineer", "sre", "platform engineer", "cloud engineer", "infrastructure engineer"],
+  // Specialties: the specialty word plus the usual ways it's titled ("Software Engineer, Backend" has both words).
+  "backend engineer": ["backend engineer", "back end engineer", "backend developer", "back end developer", "backend software engineer",
+    "software engineer backend", "server engineer", "api engineer", "platform engineer"],
+  "frontend engineer": ["frontend engineer", "front end engineer", "frontend developer", "front end developer", "ui engineer",
+    "web developer", "software engineer frontend", "react developer"],
+  "full stack engineer": ["full stack", "fullstack", "full-stack", "software engineer full stack"],
+  "mobile engineer": ["mobile engineer", "mobile developer", "ios engineer", "ios developer", "android engineer", "android developer",
+    "software engineer mobile", "software engineer ios", "software engineer android"],
+  "security engineer": ["security engineer", "application security engineer", "cybersecurity engineer", "security analyst",
+    "cyber security analyst", "information security", "soc analyst", "product security engineer"],
+  "embedded engineer": ["embedded software engineer", "embedded engineer", "firmware engineer", "embedded developer", "embedded systems engineer"],
+  "product manager": ["product manager", "technical product manager", "associate product manager", "product owner"],
+  "solutions engineer": ["solutions engineer", "sales engineer", "solutions architect", "customer engineer", "forward deployed engineer"],
 };
 const ALIASES: Record<string, string> = {
   "software developer": "software engineer", swe: "software engineer", developer: "software engineer", programmer: "software engineer",
   "ml engineer": "machine learning engineer", "help desk": "it support", "it specialist": "it support", "technical support": "it support",
   sre: "devops engineer", "site reliability engineer": "devops engineer", "business intelligence analyst": "data analyst",
+  "back end engineer": "backend engineer", "backend developer": "backend engineer", "front end engineer": "frontend engineer",
+  "frontend developer": "frontend engineer", "full stack developer": "full stack engineer", "fullstack engineer": "full stack engineer",
+  "full stack": "full stack engineer", "ios engineer": "mobile engineer", "android engineer": "mobile engineer",
+  "ios developer": "mobile engineer", "android developer": "mobile engineer", "mobile developer": "mobile engineer",
+  "cybersecurity": "security engineer", "security analyst": "security engineer", "firmware engineer": "embedded engineer",
+  "embedded software engineer": "embedded engineer", pm: "product manager", "sales engineer": "solutions engineer",
 };
 
 /** Keyword fallback for the CLI: "junior software engineer" → entry level, software-engineer titles. */
@@ -137,7 +156,8 @@ export function levelFit(title: string, plan: Pick<SearchPlan, "level" | "intern
     case "mid":
       return SENIOR_TITLE.test(title) || /\b(junior|jr\.?|new[- ]grad)\b/i.test(title) ? null : 1;
     case "senior":
-      return /\b(senior|sr\.?|staff|principal|lead)\b/i.test(title) ? 2 : null;
+      if (/\b(senior|sr\.?|staff|principal|lead)\b/i.test(title)) return 2;
+      return /\b(iii|iv|v|[3-9])\b(?!\s*(\+|years))/i.test(title) && !INTERN_TITLE.test(title) ? 1 : null;
     default:
       return 1;
   }

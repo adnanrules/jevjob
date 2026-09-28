@@ -150,6 +150,21 @@ export const READERS: Record<Ats, Reader> = {
     };
   },
 
+  async apple({ id }, url) {
+    const d = (await get<Json>(`https://jobs.apple.com/api/v1/jobDetails/${id}`)).res;
+    if (!d) return null;
+    const places = (d.locations ?? []).map((l: Json) => [l.city, l.stateProvince, l.countryName].filter(Boolean).join(", "));
+    return {
+      title: d.postingTitle ?? "",
+      location: places.join("; ") + (d.homeOffice === true ? " (Remote)" : ""),
+      postedAt: isoDay(d.postDateInGMT),
+      postingUrl: url,
+      applyUrl: url,
+      description: sections([["", d.jobSummary], ["Description", d.description], ["Minimum Qualifications", d.minimumQualifications],
+        ["Preferred Qualifications", d.preferredQualifications]]),
+    };
+  },
+
   // careers.ibm.com posting pages sit behind a bot check, but the site's search index holds the full text.
   async ibm({ id }, url) {
     const res = await post<Json>("https://www-api.ibm.com/search/api/v2", {

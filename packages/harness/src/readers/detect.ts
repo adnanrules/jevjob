@@ -3,7 +3,7 @@
 
 export type Ats =
   | "greenhouse" | "lever" | "ashby" | "workday" | "smartrecruiters" | "workable"
-  | "oracle" | "icims" | "rippling" | "eightfold" | "amazon" | "ibm";
+  | "oracle" | "icims" | "rippling" | "eightfold" | "amazon" | "ibm" | "apple";
 
 export interface Target {
   ats: Ats;
@@ -27,6 +27,7 @@ const PATTERNS: Array<[Ats, RegExp, string[]]> = [
   ["eightfold", /(apply\.careers\.microsoft\.com)\/careers\/job\/(\d+)/i, ["host", "id"]],
   ["amazon", /amazon\.jobs\/(?:[a-z]{2}(?:-[a-z]{2})?\/)?jobs\/(\d+)/i, ["id"]],
   ["ibm", /careers\.ibm\.com\/.*[?&]jobId=(\d+)/i, ["id"]],
+  ["apple", /jobs\.apple\.com\/[\w-]+\/details\/(\d+)/i, ["id"]],
 ];
 
 export function detect(url: string): Target | null {

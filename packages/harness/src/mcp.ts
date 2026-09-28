@@ -8,23 +8,23 @@ import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js"
 import { z } from "zod";
 import {
   addJobs, addSearchResults, APP_URL, BATCH_SIZE, clearJobs, currentJobs, jevAvailable, moreFromSearch, openApp, planFromQuery,
-  joboidDir, rankResume, refreshInBackground, searchCareerSites, searchStatus, startSearch, validatePlan, type SearchPlan,
+  joboidDir, rankResume, refreshInBackground, searchCareerSites, searchStatus, startSearch, validatePlan, warmBoards, type SearchPlan,
 } from "./index";
 
 const WORKFLOW = [
-  "Workflow: (1) start_search with the user's request. (2) If the Indeed plugin is available: for each search it lists,",
-  "call Indeed search_jobs (country_code US) and pass its raw output to add_search_results; it answers with job ids to",
-  "fetch; call get_job_details for those and pass the raw outputs to add_jobs (several per call is fine). If Indeed is",
-  "missing or rate-limited, skip to step 3. (3) Call search_career_sites (no arguments): employers' own career sites and,",
-  "for entry-level searches, the community new-grad list. (4) Follow `next` until it says done or that every source is",
-  "used up, then open_app. JevJob skips Indeed areas that only repeat themselves, and widens a short 'posted within'",
-  "window step by step (tagging those postings), so just follow `next`. Still short without Indeed? Use your web search:",
-  "find individual postings (employer career sites preferred), read each one, and pass them to add_jobs as postings.",
-  "Pass tool output verbatim; never summarize or judge postings yourself. 'more' or 'next 50' → more_jobs, then continue.",
+  "Workflow: (1) start_search with the user's request. (2) Call search_career_sites: employers' own career sites (the",
+  "community new-grad list and thousands of company job boards, any level), with direct apply links. Pass",
+  "indeed_unavailable: true if you don't have the Indeed plugin. (3) If `next` names Indeed searches: call Indeed",
+  "search_jobs (country_code US) for each and pass the raw output to add_search_results; it answers with job ids to fetch;",
+  "call get_job_details for those and pass the raw outputs to add_jobs (several per call is fine). If Indeed is",
+  "rate-limited, call search_career_sites again with indeed_unavailable: true. (4) Follow `next` until it says done or",
+  "that every source is used up, then open_app. JevJob widens a short 'posted within' window step by step (tagging those",
+  "postings), so just follow `next`. Pass tool output verbatim; never summarize or judge postings yourself.",
+  "'more' or 'next 50' → more_jobs, then continue the same way.",
 ].join(" ");
 
 const server = new McpServer(
-  { name: "jevjob", version: "1.1.0" },
+  { name: "jevjob", version: "1.2.0" },
   {
     instructions: [
       "JevJob ranks job postings against a resume, one small typed classification per requirement, and shows them in a web app.",
@@ -88,7 +88,8 @@ server.registerTool(
         ...(input.radius_miles !== undefined && { radiusMiles: input.radius_miles }),
       });
       const joboid = joboidDir();
-      if (joboid) refreshInBackground(joboid); // ready by the time Indeed is used up and career sites are searched
+      if (joboid) refreshInBackground(joboid);
+      warmBoards(plan); // start pulling company boards now, so search_career_sites finds them cached
       return json(startSearch({ ...plan, count: input.count ?? BATCH_SIZE }));
     } catch (err) {
       return fail(err);
@@ -151,11 +152,14 @@ server.registerTool(
   {
     title: "Search company career sites",
     description:
-      "Call when `next` says so, or right away when the Indeed plugin is missing or rate-limited. For entry-level searches JevJob reads the community new-grad list (github.com/SimplifyJobs/New-Grad-Positions) and each matching posting from the employer's own system (plus, when Joboid is installed, the companies it follows). Same checks as Indeed; direct employer apply links. Takes a few seconds to a minute.",
+      "Call right after start_search (next says so). JevJob searches employers' own sites: for entry-level searches the community new-grad list (github.com/SimplifyJobs/New-Grad-Positions), and for every search the job boards of ~4,500 employers that hire tech roles (Greenhouse, Lever, Ashby, Workday, …), any level. Each posting is read from the employer's own system; direct apply links. Takes up to about a minute. Pass indeed_unavailable: true if you don't have the Indeed plugin or it's rate-limited.",
+    inputSchema: {
+      indeed_unavailable: z.boolean().optional().describe("true: no Indeed plugin (or it's rate-limited); skip its searches"),
+    },
   },
-  async () => {
+  async ({ indeed_unavailable }) => {
     try {
-      return json(await searchCareerSites());
+      return json(await searchCareerSites({ indeedUnavailable: indeed_unavailable ?? false }));
     } catch (err) {
       return fail(err);
     }

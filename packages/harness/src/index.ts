@@ -1,4 +1,5 @@
 ﻿export { APP_URL, openApp } from "./app";
+export { addFromBoards, directory, warmBoards, type Board, type BoardsStep } from "./boards";
 export { searchCareerSites, type CareerSitesSummary } from "./career-sites";
 export { DEFAULT_RADIUS_MILES, homeState, placement, placeRank, searchAreas, type Placement, type SearchArea } from "./geography";
 export { locate, miles, resolveHome, type Home, type Place } from "./places";

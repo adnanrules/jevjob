@@ -188,7 +188,7 @@ describe("the Indeed flow", () => {
   it("plans, filters listings before fetching, and loads in-state postings first", () => {
     const brief = indeed.startSearch(planFromQuery("junior software engineer in Chicago"));
     expect(brief.areas[0]!.query).toBe("Chicago, IL");
-    expect(brief.next).toContain("search_jobs");
+    expect(brief.next).toContain("search_career_sites"); // employers' own sites first; Indeed tops up
 
     const results = indeed.addSearchResults(
       [
@@ -293,8 +293,8 @@ describe("when the search runs short", () => {
     // The remaining searches find nothing new, so Chicago saturates and the 10-day-old posting is released.
     let last = results;
     for (const title of brief.titles.slice(1)) {
-      if (!last.next.includes("search_jobs")) break;
       last = indeed.addSearchResults(listing(50, "Software Engineer", "Fresh Co", "Chicago, IL", daysAgo(2)), { title, location: "Chicago, IL" });
+      if (last.widenedTo) break;
     }
     expect(last.widenedTo).toBe(14);
     expect(last.fetch).toEqual(["JOBSEARCH_50", "JOBSEARCH_51"]); // in-window first

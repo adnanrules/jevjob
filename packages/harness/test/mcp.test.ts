@@ -45,13 +45,13 @@ describe("jevjob MCP server", () => {
     expect((await client.callTool({ name: "add_search_results", arguments: { result: "no search started yet" } })).isError).toBe(true);
   });
 
-  it("plans a search from plain words and says exactly what to search on Indeed next", async () => {
+  it("plans a search from plain words and sends the assistant to employers' career sites first", async () => {
     const brief = JSON.parse(text(await client.callTool({ name: "start_search", arguments: { request: "junior software engineer in Chicago, last 7 days" } }))) as {
       level: string; postedWithinDays: number; areas: Array<{ query: string }>; next: string; target: number;
     };
     expect(brief).toMatchObject({ level: "entry", postedWithinDays: 7, target: 50 });
     expect(brief.areas[0]!.query).toBe("Chicago, IL");
-    expect(brief.next).toContain("search_jobs");
+    expect(brief.next).toContain("search_career_sites");
   });
 
   it("exposes a reusable /jevjob prompt, including 'more'", async () => {

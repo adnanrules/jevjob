@@ -10,8 +10,8 @@
 //
 // When the search runs short, it degrades in a fixed order instead of giving up:
 //   1. An area where Indeed keeps returning postings it already showed is "saturated" and skipped.
-//   2. Once Indeed is used up, employers' career sites are searched: the new-grad feed, plus the companies Joboid
-//      follows when it's installed (direct employer links either way).
+//   2. Employers' career sites come first (the new-grad list, ~4,500 company boards, and Joboid's companies when
+//      it's installed); Indeed then tops up what's missing, skipping areas that only repeat themselves.
 //   3. Still short: the "posted within" window widens step by step (7 → 14 → 30 days) and releases the
 //      near misses it held back. Those are tagged, and rank below in-window jobs of the same tier.
 //
@@ -82,6 +82,8 @@ export interface Search {
   /** Areas (search queries, lowercase) skipped because Indeed kept repeating itself there. */
   saturated: string[];
   careerSites: "pending" | "done" | "unavailable";
+  /** search_career_sites calls so far: each stops at a time budget, and a search gets at most a few. */
+  careerPasses?: number;
 }
 
 export function readSearch(): Search | null {
@@ -231,9 +233,14 @@ export function nextStep(s: Search): string {
   const need = s.target - s.loaded - s.queue.length;
   const fetch = `Fetch the ${s.queue.length} queued postings with get_job_details and pass them to add_jobs.`;
   if (s.queue.length && need <= 0) return fetch;
+  // Employers' own sites first: fast, direct apply links, no rate limits. Indeed tops up what's still missing.
+  if (s.careerSites === "pending") {
+    return (s.careerPasses ?? 0) > 0
+      ? "Call search_career_sites again: it stopped at its time limit with more employers left to read."
+      : "Call search_career_sites (employers' own career sites; pass indeed_unavailable: true if you don't have the Indeed plugin).";
+  }
   const pending = pendingSearches(s)[0];
-  if (pending) return `Search Indeed: search_jobs(search: "${pending.title}", location: "${pending.area.query}", country_code: "US"), then add_search_results.`;
-  if (s.careerSites === "pending") return "Indeed is used up. Call search_career_sites (employers' own career sites, direct apply links).";
+  if (pending) return `Search Indeed: search_jobs(search: "${pending.title}", location: "${pending.area.query}", country_code: "US"), then add_search_results. No Indeed plugin, or rate-limited? Call search_career_sites with indeed_unavailable: true instead.`;
   if (s.queue.length) return `${fetch} Every source is used up after that.`;
   return "Every source is used up. Call open_app and report how many postings loaded and the main skip reasons.";
 }
@@ -278,7 +285,10 @@ export function moreFromSearch(): SearchBrief {
   if (!s) throw new Error("No search to continue. Start one with start_search.");
   s.target = s.loaded + BATCH_SIZE;
   // Career sites only fetched what the last batch needed; there may be more there now.
-  if (s.careerSites === "done") s.careerSites = "pending";
+  if (s.careerSites === "done") {
+    s.careerSites = "pending";
+    s.careerPasses = 0;
+  }
   settle(s);
   saveSearch(s);
   return brief(s);

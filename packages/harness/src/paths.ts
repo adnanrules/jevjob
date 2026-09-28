@@ -38,8 +38,8 @@ export const SESSION_FILE = path.join(DATA_DIR, "session.json");
 /** The harness-driven (Indeed / web) search behind the current pool. */
 export const SEARCH_FILE = path.join(DATA_DIR, "search.json");
 export const JEV_CACHE_DIR = fromRoot(".jevjob", "cache", "jev");
-/** Downloaded job feeds and the postings read from them. */
-export const FEED_CACHE_DIR = path.join(DATA_DIR, "cache", "feeds");
+/** Downloaded job feeds, company board listings, and the postings read from them. JEVJOB_CACHE_DIR can share it. */
+export const FEED_CACHE_DIR = process.env.JEVJOB_CACHE_DIR || path.join(DATA_DIR, "cache", "feeds");
 
 /** Joboid's folder: JOBOID_DIR, or the Joboid repo this project lives inside (projects/jevjob → ../..). */
 export function joboidDir(): string | null {

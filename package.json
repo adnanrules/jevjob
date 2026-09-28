@@ -1,6 +1,6 @@
 {
   "name": "jevjob",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "Rank job postings against your resume, one typed classification per requirement.",
   "license": "MIT",
   "private": true,
@@ -20,6 +20,7 @@
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "demo": "tsx scripts/demo.ts",
     "eval": "tsx packages/eval/src/run.ts",
+    "bench:search": "tsx scripts/search-bench.ts",
     "compare": "tsx scripts/compare.ts",
     "sweep": "tsx packages/eval/src/sweep.ts",
     "coverage": "tsx scripts/coverage.ts",
